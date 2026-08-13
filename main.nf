@@ -31,6 +31,7 @@ def helpMessage() {
       --gene-loc [file]      Gene location file
       --hic_bed [file]       Optional Hi-C mappable regions BED file
       --pathways [file]      Pathway database file (.gmt)
+      --window [str]         MAGMA annotation window size in kb (default: '10,10')
 
     Execution control flags:
       --stop_at_prep         Stop pipeline after GWAS preparation step
@@ -56,6 +57,7 @@ workflow {
     Gene Loc    : ${params.gene_loc}
     Hi-C BED    : ${params.hic_bed ?: 'None'}
     Pathways GMT: ${params.pathways}
+    Window Size : ${params.window}
     Output Dir  : ${params.outdir}
     ========================================================================================
     """.stripIndent()
