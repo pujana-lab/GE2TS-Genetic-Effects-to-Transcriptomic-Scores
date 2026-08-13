@@ -11,18 +11,22 @@ import sys
 import subprocess
 import pandas as pd
 
-def run_magma(gwas_path, bfile_prefix, gene_loc, window, out_prefix, sample_size, hic_bed=None, mock=False):
-    magma_bin = os.environ.get("MAGMA_BIN", "magma")
+def run_magma(gwas_path, bfile_prefix, gene_loc, window, out_prefix, sample_size, hic_bed=None, magma_bin_path=None, mock=False):
+    magma_bin = magma_bin_path or os.environ.get("MAGMA_BIN", "magma")
     
     # Check if MAGMA binary is installed
     has_magma = False
     if not mock:
-        try:
-            res = subprocess.run([magma_bin, "--version"], capture_output=True, text=True)
-            if res.returncode == 0 or "MAGMA" in res.stdout or "MAGMA" in res.stderr:
-                has_magma = True
-        except FileNotFoundError:
-            has_magma = False
+        candidates = [magma_bin, "/home/luis/Documentos/projects/tools/gwas-magma-pipeline/bin/magma_v1.10/magma"]
+        for candidate in candidates:
+            try:
+                res = subprocess.run([candidate, "--version"], capture_output=True, text=True)
+                if res.returncode == 0 or "MAGMA" in res.stdout or "MAGMA" in res.stderr:
+                    magma_bin = candidate
+                    has_magma = True
+                    break
+            except FileNotFoundError:
+                continue
 
     genes_out = f"{out_prefix}.genes.out"
     genes_raw = f"{out_prefix}.genes.raw"
@@ -31,6 +35,7 @@ def run_magma(gwas_path, bfile_prefix, gene_loc, window, out_prefix, sample_size
         print(f"[MAGMA Wrapper] Hi-C BED region file provided: {hic_bed}")
 
     if has_magma and not mock:
+        print(f"[MAGMA Wrapper] Using real MAGMA binary at: {magma_bin}")
         # 1. Run Annotation
         annot_prefix = f"{out_prefix}_annot"
         annot_cmd = [
@@ -41,9 +46,6 @@ def run_magma(gwas_path, bfile_prefix, gene_loc, window, out_prefix, sample_size
             "--gene-loc", gene_loc,
             "--out", annot_prefix
         ]
-        if hic_bed and os.path.exists(hic_bed):
-            # MAGMA supports multiple/additional annotation or bed filtering if structured
-            pass
         subprocess.run(annot_cmd, check=True)
 
         # 2. Run Gene Analysis
@@ -97,6 +99,7 @@ def main():
     parser.add_argument("--out-prefix", required=True, help="Output prefix for MAGMA results")
     parser.add_argument("--sample-size", default="10000", help="Sample size N")
     parser.add_argument("--hic-bed", default=None, help="Optional Hi-C regions BED file")
+    parser.add_argument("--magma-bin", default=None, help="Path to MAGMA binary")
     parser.add_argument("--mock", action="store_true", help="Force mock MAGMA outputs")
 
     args = parser.parse_args()
@@ -108,6 +111,7 @@ def main():
         out_prefix=args.out_prefix,
         sample_size=args.sample_size,
         hic_bed=args.hic_bed,
+        magma_bin_path=args.magma_bin,
         mock=args.mock
     )
 

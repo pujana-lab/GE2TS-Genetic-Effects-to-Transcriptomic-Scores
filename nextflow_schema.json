@@ -42,6 +42,10 @@
           "type": "string",
           "description": "MAGMA annotation window size in kb (e.g. 10,10 or 100,100)"
         },
+        "magma_bin": {
+          "type": "string",
+          "description": "Path to MAGMA binary executable"
+        },
         "stop_at_prep": {
           "type": "boolean",
           "description": "Stop pipeline after GWAS preparation step"
