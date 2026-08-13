@@ -1,4 +1,5 @@
 include { GWAS_PREP       } from '../modules/local/gwas_prep'
+include { GWAS_MATCH      } from '../modules/local/gwas_match'
 include { MAGMA_ANNOT_RUN } from '../modules/local/magma_annot_run'
 include { QC_GSEA         } from '../modules/local/qc_gsea'
 
@@ -23,15 +24,26 @@ workflow GE2TS {
         ch_qc_summary   = Channel.empty()
     }
 
+    // 1.5. GWAS Match against Reference BIM IDs
+    if (!params.input_genes_out && !params.stop_at_prep && !params.skip_magma) {
+        GWAS_MATCH(
+            ch_current_prep,
+            ch_bfile
+        )
+        ch_matched_gwas = GWAS_MATCH.out.matched_gwas
+    } else {
+        ch_matched_gwas = ch_current_prep
+    }
+
     // 2. MAGMA Annotation & Analysis (Phase 2)
     if (params.stop_at_prep || params.skip_magma) {
         ch_current_genes = Channel.empty()
         ch_genes_raw     = Channel.empty()
     } else {
-        ch_magma_input = params.input_genes_out ? ch_genes_out : ch_current_prep
+        ch_magma_input = params.input_genes_out ? ch_genes_out : ch_matched_gwas
         if (!params.input_genes_out) {
             MAGMA_ANNOT_RUN(
-                ch_current_prep,
+                ch_magma_input,
                 ch_bfile,
                 ch_gene_loc,
                 ch_hic_bed
