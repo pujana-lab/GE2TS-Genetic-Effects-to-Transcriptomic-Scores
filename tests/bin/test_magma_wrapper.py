@@ -1,7 +1,8 @@
 import os
+import sys
 import tempfile
 import pandas as pd
-from bin.magma_wrapper import run_magma
+from bin.magma_wrapper import run_magma, main
 
 def test_run_magma_mock():
     gwas_path = "assets/test_data/sample_gwas.tsv"
@@ -29,3 +30,21 @@ def test_run_magma_mock():
         assert "SYMBOL" in df.columns
         assert "P" in df.columns
         assert len(df) == 3
+
+def test_magma_wrapper_cli(monkeypatch):
+    gwas_path = "assets/test_data/sample_gwas.tsv"
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        out_prefix = os.path.join(tmpdir, "cli_magma")
+        
+        test_args = [
+            "magma_wrapper.py",
+            "--gwas", gwas_path,
+            "--out-prefix", out_prefix,
+            "--mock"
+        ]
+        monkeypatch.setattr(sys, "argv", test_args)
+        main()
+
+        assert os.path.exists(f"{out_prefix}.genes.out")
+        assert os.path.exists(f"{out_prefix}.genes.raw")

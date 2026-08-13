@@ -1,8 +1,9 @@
 import os
 import json
+import sys
 import tempfile
 import pytest
-from bin.gwas_prep import process_gwas
+from bin.gwas_prep import process_gwas, main
 
 def test_process_gwas():
     input_path = "assets/test_data/sample_gwas.tsv"
@@ -26,6 +27,40 @@ def test_process_gwas():
 
         assert "TotalVariantsPreQC" in summary
         assert summary["TotalVariantsPreQC"] == 5
-        # rs1003 has A2='AG' (length 2), so it should be filtered out when filter_indels=True
         assert summary["FilteredIndels"] == 1
         assert summary["TotalVariantsPostQC"] == 4
+
+def test_process_gwas_gz_output():
+    input_path = "assets/test_data/sample_gwas.tsv"
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        output_gz = os.path.join(tmpdir, "out_gwas.tsv.gz")
+        qc_summary = os.path.join(tmpdir, "qc_summary.json")
+
+        process_gwas(
+            input_path=input_path,
+            output_path=output_gz,
+            qc_summary_path=qc_summary,
+            filter_indels=False
+        )
+
+        assert os.path.exists(output_gz)
+
+def test_gwas_prep_cli(monkeypatch):
+    input_path = "assets/test_data/sample_gwas.tsv"
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        output_tsv = os.path.join(tmpdir, "cli_gwas.tsv")
+        qc_summary = os.path.join(tmpdir, "cli_qc.json")
+
+        test_args = [
+            "gwas_prep.py",
+            "--input", input_path,
+            "--output-tsv", output_tsv,
+            "--qc-summary", qc_summary
+        ]
+        monkeypatch.setattr(sys, "argv", test_args)
+        main()
+
+        assert os.path.exists(output_tsv)
+        assert os.path.exists(qc_summary)
