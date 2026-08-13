@@ -48,40 +48,40 @@ nextflow run main.nf \
 
 ---
 
-## 🧬 Real-World Execution Examples (CIMBA BRCA1 & Hallmarks)
+## 🧬 Real-World Execution Examples (GWAS & Hallmarks)
 
 ### 1. Standard 10kb Window (`--window "10,10"`)
 ```bash
 nextflow run main.nf \
-  --input /home/luis/Documentos/projects/tools/gwas-magma-pipeline/GWAS_MAGMA_PREP/input_original/CIMBA_BRCA1_BCAC_TN_meta_summary_level_statistics.txt \
-  --bfile /home/luis/Documentos/projects/tools/gwas-magma-pipeline/GWAS_MAGMA_PREP/reference/g1000_eur \
-  --gene-loc /home/luis/Documentos/projects/tools/gwas-magma-pipeline/GWAS_MAGMA_PREP/reference/NCBI37.3/NCBI37.3.gene.loc \
+  --input data/gwas_summary_stats.txt \
+  --bfile reference/g1000_eur \
+  --gene-loc reference/NCBI37.3.gene.loc \
   --pathways assets/gmt_data/h.all.v2026.1.Hs.symbols.gmt \
   --window "10,10" \
-  --outdir results_cimba_brca1_10kb
+  --outdir results_10kb
 ```
 
 ### 2. Broad 100kb Window (`--window "100,100"`)
 ```bash
 nextflow run main.nf \
-  --input /home/luis/Documentos/projects/tools/gwas-magma-pipeline/GWAS_MAGMA_PREP/input_original/CIMBA_BRCA1_BCAC_TN_meta_summary_level_statistics.txt \
-  --bfile /home/luis/Documentos/projects/tools/gwas-magma-pipeline/GWAS_MAGMA_PREP/reference/g1000_eur \
-  --gene-loc /home/luis/Documentos/projects/tools/gwas-magma-pipeline/GWAS_MAGMA_PREP/reference/NCBI37.3/NCBI37.3.gene.loc \
+  --input data/gwas_summary_stats.txt \
+  --bfile reference/g1000_eur \
+  --gene-loc reference/NCBI37.3.gene.loc \
   --pathways assets/gmt_data/h.all.v2026.1.Hs.symbols.gmt \
   --window "100,100" \
-  --outdir results_cimba_brca1_100kb
+  --outdir results_100kb
 ```
 
 ### 3. 10kb + Hi-C Tissue Mappable Regions (`--hic_bed`)
 ```bash
 nextflow run main.nf \
-  --input /home/luis/Documentos/projects/tools/gwas-magma-pipeline/GWAS_MAGMA_PREP/input_original/CIMBA_BRCA1_BCAC_TN_meta_summary_level_statistics.txt \
-  --bfile /home/luis/Documentos/projects/tools/gwas-magma-pipeline/GWAS_MAGMA_PREP/reference/g1000_eur \
-  --gene-loc /home/luis/Documentos/projects/tools/gwas-magma-pipeline/GWAS_MAGMA_PREP/reference/NCBI37.3/NCBI37.3.gene.loc \
-  --hic_bed /home/luis/Documentos/projects/tools/gwas-magma-pipeline/GWAS_MAGMA_PREP/reference/normal_breast_consensus_hic_SNP_mappable_regions_hg19.bed \
+  --input data/gwas_summary_stats.txt \
+  --bfile reference/g1000_eur \
+  --gene-loc reference/NCBI37.3.gene.loc \
+  --hic_bed reference/hic_regions.bed \
   --pathways assets/gmt_data/h.all.v2026.1.Hs.symbols.gmt \
   --window "10,10" \
-  --outdir results_cimba_brca1_hic
+  --outdir results_hic
 ```
 
 ---
