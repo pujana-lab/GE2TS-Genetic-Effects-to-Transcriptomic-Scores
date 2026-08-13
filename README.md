@@ -48,6 +48,44 @@ nextflow run main.nf \
 
 ---
 
+## 🧬 Real-World Execution Examples (CIMBA BRCA1 & Hallmarks)
+
+### 1. Standard 10kb Window (`--window "10,10"`)
+```bash
+nextflow run main.nf \
+  --input /home/luis/Documentos/projects/tools/gwas-magma-pipeline/GWAS_MAGMA_PREP/input_original/CIMBA_BRCA1_BCAC_TN_meta_summary_level_statistics.txt \
+  --bfile /home/luis/Documentos/projects/tools/gwas-magma-pipeline/GWAS_MAGMA_PREP/reference/g1000_eur \
+  --gene-loc /home/luis/Documentos/projects/tools/gwas-magma-pipeline/GWAS_MAGMA_PREP/reference/NCBI37.3/NCBI37.3.gene.loc \
+  --pathways assets/gmt_data/h.all.v2026.1.Hs.symbols.gmt \
+  --window "10,10" \
+  --outdir results_cimba_brca1_10kb
+```
+
+### 2. Broad 100kb Window (`--window "100,100"`)
+```bash
+nextflow run main.nf \
+  --input /home/luis/Documentos/projects/tools/gwas-magma-pipeline/GWAS_MAGMA_PREP/input_original/CIMBA_BRCA1_BCAC_TN_meta_summary_level_statistics.txt \
+  --bfile /home/luis/Documentos/projects/tools/gwas-magma-pipeline/GWAS_MAGMA_PREP/reference/g1000_eur \
+  --gene-loc /home/luis/Documentos/projects/tools/gwas-magma-pipeline/GWAS_MAGMA_PREP/reference/NCBI37.3/NCBI37.3.gene.loc \
+  --pathways assets/gmt_data/h.all.v2026.1.Hs.symbols.gmt \
+  --window "100,100" \
+  --outdir results_cimba_brca1_100kb
+```
+
+### 3. 10kb + Hi-C Tissue Mappable Regions (`--hic_bed`)
+```bash
+nextflow run main.nf \
+  --input /home/luis/Documentos/projects/tools/gwas-magma-pipeline/GWAS_MAGMA_PREP/input_original/CIMBA_BRCA1_BCAC_TN_meta_summary_level_statistics.txt \
+  --bfile /home/luis/Documentos/projects/tools/gwas-magma-pipeline/GWAS_MAGMA_PREP/reference/g1000_eur \
+  --gene-loc /home/luis/Documentos/projects/tools/gwas-magma-pipeline/GWAS_MAGMA_PREP/reference/NCBI37.3/NCBI37.3.gene.loc \
+  --hic_bed /home/luis/Documentos/projects/tools/gwas-magma-pipeline/GWAS_MAGMA_PREP/reference/normal_breast_consensus_hic_SNP_mappable_regions_hg19.bed \
+  --pathways assets/gmt_data/h.all.v2026.1.Hs.symbols.gmt \
+  --window "10,10" \
+  --outdir results_cimba_brca1_hic
+```
+
+---
+
 ## 📁 Pipeline Output Structure
 
 The results are published to the specified `--outdir` directory:
@@ -72,10 +110,16 @@ results/
 
 | Parameter | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `--input` | `file` | `assets/test_data/sample_gwas.tsv` | Path to GWAS summary statistics (`.tsv` or `.tsv.gz`) |
+| `--input` | `file` | `null` | Path to raw GWAS summary statistics (`.tsv`, `.csv`, `.gz`) |
+| `--input_prep` | `file` | `null` | Path to pre-prepared GWAS file (skips GWAS_PREP) |
+| `--input_genes_out`| `file` | `null` | Path to pre-computed MAGMA genes output (skips steps 1 & 2) |
 | `--bfile` | `path` | `assets/test_data/dummy_ref.bed` | PLINK reference prefix |
 | `--gene-loc` | `file` | `assets/test_data/dummy_gene.loc` | Gene location definition file |
+| `--hic_bed` | `file` | `null` | Optional Hi-C mappable regions BED file |
 | `--pathways` | `file` | `assets/test_data/dummy_pathways.gmt` | Pathway database in GMT format |
+| `--window` | `string` | `'10,10'` | MAGMA annotation window size in kb (e.g. `'10,10'` or `'100,100'`) |
+| `--stop_at_prep` | `boolean` | `false` | Stop pipeline after GWAS preparation step |
+| `--skip_gsea` | `boolean` | `false` | Stop pipeline after MAGMA gene analysis step |
 | `--outdir` | `dir` | `results` | Output directory path |
 
 ---
@@ -98,4 +142,5 @@ nextflow run main.nf -profile test
 
 - [Agent Guidelines & Architecture Index](AGENTS.md)
 - [nf-core Standard DSL2 Architecture](docs/pipeline/nf-core-dsl2-architecture.md)
+- [Modular Step-by-Step Pipeline Execution](docs/pipeline/modular-step-by-step-pipeline-execution.md)
 - [Mock Wrappers & Pytest Convention](docs/testing/mock-wrappers-and-pytest.md)
