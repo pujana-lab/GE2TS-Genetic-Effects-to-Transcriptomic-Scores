@@ -9,9 +9,8 @@ PATHWAYS="${GE2TS_HOME}/assets/gmt_data/h.all.v2026.1.Hs.symbols.gmt"
 BFILE="${WORK_DIR}/reference/g1000_eur"
 GENE_LOC="${WORK_DIR}/reference/NCBI37.3/NCBI37.3.gene.loc"
 HIC_BED="${WORK_DIR}/reference/normal_breast_consensus_hic_SNP_mappable_regions_hg19.bed"
-MAGMA_BIN="/home/luis/Documentos/projects/tools/gwas-magma-pipeline/bin/magma_v1.10/magma"
 
-echo "=== Starting GE2TS Batch Processing (9 Runs with Real MAGMA) ==="
+echo "=== Starting GE2TS Batch Processing (9 Runs) ==="
 
 # 1. BRCA1
 for WINDOW in "10,10" "100,100"; do
@@ -20,7 +19,6 @@ for WINDOW in "10,10" "100,100"; do
       --input "${WORK_DIR}/input_data/cimba_onco_icogs_brca1_combined_results.txt" \
       --bfile "${BFILE}" \
       --gene_loc "${GENE_LOC}" \
-      --magma_bin "${MAGMA_BIN}" \
       --pathways "${PATHWAYS}" \
       --window "${WINDOW}" \
       --outdir "${WORK_DIR}/results_BRCA1_${WINDOW//,/}" \
@@ -32,7 +30,6 @@ nextflow run "${GE2TS_HOME}/main.nf" \
   --input "${WORK_DIR}/input_data/cimba_onco_icogs_brca1_combined_results.txt" \
   --bfile "${BFILE}" \
   --gene_loc "${GENE_LOC}" \
-  --magma_bin "${MAGMA_BIN}" \
   --hic_bed "${HIC_BED}" \
   --pathways "${PATHWAYS}" \
   --window "10,10" \
@@ -47,7 +44,6 @@ for WINDOW in "10,10" "100,100"; do
       --input "${WORK_DIR}/input_data/cimba_onco_icogs_brca2_combined_results.txt" \
       --bfile "${BFILE}" \
       --gene_loc "${GENE_LOC}" \
-      --magma_bin "${MAGMA_BIN}" \
       --pathways "${PATHWAYS}" \
       --window "${WINDOW}" \
       --outdir "${WORK_DIR}/results_BRCA2_${WINDOW//,/}" \
@@ -59,7 +55,6 @@ nextflow run "${GE2TS_HOME}/main.nf" \
   --input "${WORK_DIR}/input_data/cimba_onco_icogs_brca2_combined_results.txt" \
   --bfile "${BFILE}" \
   --gene_loc "${GENE_LOC}" \
-  --magma_bin "${MAGMA_BIN}" \
   --hic_bed "${HIC_BED}" \
   --pathways "${PATHWAYS}" \
   --window "10,10" \
@@ -74,7 +69,6 @@ for WINDOW in "10,10" "100,100"; do
       --input "${WORK_DIR}/input_data/CIMBA_BRCA1_BCAC_TN_meta_summary_level_statistics.txt" \
       --bfile "${BFILE}" \
       --gene_loc "${GENE_LOC}" \
-      --magma_bin "${MAGMA_BIN}" \
       --pathways "${PATHWAYS}" \
       --window "${WINDOW}" \
       --outdir "${WORK_DIR}/results_TNBC_${WINDOW//,/}" \
@@ -86,7 +80,6 @@ nextflow run "${GE2TS_HOME}/main.nf" \
   --input "${WORK_DIR}/input_data/CIMBA_BRCA1_BCAC_TN_meta_summary_level_statistics.txt" \
   --bfile "${BFILE}" \
   --gene_loc "${GENE_LOC}" \
-  --magma_bin "${MAGMA_BIN}" \
   --hic_bed "${HIC_BED}" \
   --pathways "${PATHWAYS}" \
   --window "10,10" \
