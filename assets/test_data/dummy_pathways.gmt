@@ -1,0 +1,2 @@
+PATHWAY_CELL_CYCLE	http://www.broadinstitute.org/gsea/msigdb/cards/PATHWAY_CELL_CYCLE	GENE_A	GENE_B
+PATHWAY_IMMUNE_RESPONSE	http://www.broadinstitute.org/gsea/msigdb/cards/PATHWAY_IMMUNE_RESPONSE	GENE_B	GENE_C

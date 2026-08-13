@@ -9,6 +9,16 @@ created_by:
     name: "Gemini"
     version: "3.6-flash"
     reasoning_effort: "high"
+
+implemented_by:
+  tool: "opencode"
+  model:
+    name: "Gemini"
+    version: "3.6-flash"
+    reasoning_effort: "high"
+
+last_implementation_at: "2026-08-13T00:00:00Z"
+has_completed_all_phases: false
 ---
 
 # Goal
@@ -41,13 +51,13 @@ Adapt and implement the `GE2TS` pipeline following standard nf-core Nextflow DSL
 Establish the nf-core directory structure, create small synthetic/dummy test datasets (dummy GWAS, dummy reference, dummy pathway DB) for rapid pipeline verification, and implement the end-to-end `GWAS_PREP` vertical slice (Python script `bin/gwas_prep.py`, Nextflow module `modules/local/gwas_prep.nf`, and unit tests).
 
 ### To-do Actions List
-- [ ] Scaffold standard nf-core directory structure (`bin/`, `modules/local/`, `workflows/`, `assets/test_data/`, `conf/`, `tests/`).
-- [ ] Create synthetic test datasets in `assets/test_data/` (`sample_gwas.tsv`, `dummy_ref.bed`, `dummy_pathways.gmt`).
-- [ ] Implement `bin/gwas_prep.py` for column standardization, SNP QC, allele alignment, and indel filtering based on `gwas-magma-pipeline`.
-- [ ] Create unit tests in `tests/bin/test_gwas_prep.py` to verify `gwas_prep.py` CLI and filtering logic on dummy data.
-- [ ] Implement Nextflow DSL2 module `modules/local/gwas_prep.nf` wrapping `bin/gwas_prep.py`.
-- [ ] Verify the changes in terms of typechecking, linting and tests using the project's verification command (look it up in the AGENTS.md file or the project configuration). Fix issues if any.
-- [ ] STOP. Present the changes to the user for review and suggest commit messages (or pull request titles, when the phases are implemented through pull requests). Do NOT proceed to the next phase until the user explicitly asks.
+- [x] Scaffold standard nf-core directory structure (`bin/`, `modules/local/`, `workflows/`, `assets/test_data/`, `conf/`, `tests/`).
+- [x] Create synthetic test datasets in `assets/test_data/` (`sample_gwas.tsv`, `dummy_ref.bed`, `dummy_pathways.gmt`).
+- [x] Implement `bin/gwas_prep.py` for column standardization, SNP QC, allele alignment, and indel filtering based on `gwas-magma-pipeline`.
+- [x] Create unit tests in `tests/bin/test_gwas_prep.py` to verify `gwas_prep.py` CLI and filtering logic on dummy data.
+- [x] Implement Nextflow DSL2 module `modules/local/gwas_prep.nf` wrapping `bin/gwas_prep.py`.
+- [x] Verify the changes in terms of typechecking, linting and tests using the project's verification command (look it up in the AGENTS.md file or the project configuration). Fix issues if any.
+- [x] STOP. Present the changes to the user for review and suggest commit messages (or pull request titles, when the phases are implemented through pull requests). Do NOT proceed to the next phase until the user explicitly asks.
 
 ## Phase 2: `MAGMA_Annot_Run` Module
 
@@ -88,6 +98,6 @@ Assemble the complete end-to-end Nextflow workflow in `workflows/ge2ts.nf` and `
 
 # Next step
 
-The next step is to start Phase 1 to set up the nf-core project structure, generate dummy test data, and implement the `GWAS_PREP` module.
+The next step is to implement Phase 2 to create the `MAGMA_ANNOT_RUN` Nextflow DSL2 module and its configuration handlers.
 
-Plan created by 🐢 💨 (Turbotuga™, [Codely](https://codely.com)’s mascot)
+First step completed with 🧪 ⚙️ by 🐢 💨 (Turbotuga™, [Codely](https://codely.com)’s mascot)
