@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 GE2TS - GWAS Preparation & Quality Control Script
-Standardizes column names, checks P-value validity, calculates Z-score,
-and filters indels/invalid variants.
+Auto-detects delimiter (CSV/TSV), maps column synonyms, checks P-value validity, 
+calculates Z-score, and filters indels/invalid variants.
 """
 
 import argparse
@@ -10,9 +10,34 @@ import os
 import sys
 import gzip
 import json
+import csv
+
+SYNONYM_MAP = {
+    "MARKERNAME": "SNP",
+    "POSITION": "BP",
+    "ALLELE1": "A1",
+    "ALLELE2": "A2",
+    "EFFECT": "BETA",
+    "STDERR": "SE",
+    "P-VALUE": "P",
+    "PVAL": "P",
+    "P_VAL": "P"
+}
+
+def detect_delimiter(file_path):
+    # Peek at first line
+    try:
+        open_func = gzip.open if file_path.endswith('.gz') else open
+        with open_func(file_path, 'rt', encoding='utf-8', errors='ignore') as f:
+            sample = f.read(2048)
+            dialect = csv.Sniffer().sniff(sample, delimiters=",\t")
+            return dialect.delimiter
+    except Exception:
+        return '\t'
 
 def process_gwas(input_path, output_path, qc_summary_path, filter_indels=True):
-    # Try importing polars, fallback to pandas
+    sep = detect_delimiter(input_path)
+
     try:
         import polars as pl
         use_polars = True
@@ -20,11 +45,23 @@ def process_gwas(input_path, output_path, qc_summary_path, filter_indels=True):
         import pandas as pd
         use_polars = False
 
-    # Read input
     if use_polars:
-        df = pl.read_csv(input_path, separator='\t', infer_schema_length=0, null_values=["NULL", "NA", "nan"])
+        try:
+            df = pl.read_csv(input_path, separator=sep, infer_schema_length=0, null_values=["NULL", "NA", "nan"])
+        except Exception:
+            # Fallback to pandas if polars fails on complex CSV
+            use_polars = False
+
+    if use_polars:
         # Standardize uppercase column names
-        df = df.rename({c: c.upper() for c in df.columns})
+        rename_dict = {}
+        for c in df.columns:
+            uc = c.upper()
+            if uc in SYNONYM_MAP:
+                rename_dict[c] = SYNONYM_MAP[uc]
+            else:
+                rename_dict[c] = uc
+        df = df.rename(rename_dict)
         total_variants_pre = len(df)
 
         # Cast numeric fields
@@ -49,7 +86,6 @@ def process_gwas(input_path, output_path, qc_summary_path, filter_indels=True):
 
         total_variants_post = len(df)
 
-        # Write output
         if output_path.endswith(".gz"):
             temp_path = output_path.replace(".gz", ".tmp")
             df.write_csv(temp_path, separator='\t')
@@ -61,8 +97,16 @@ def process_gwas(input_path, output_path, qc_summary_path, filter_indels=True):
             df.write_csv(output_path, separator='\t')
 
     else:
-        df = pd.read_csv(input_path, sep='\t')
-        df.columns = [c.upper() for c in df.columns]
+        import pandas as pd
+        df = pd.read_csv(input_path, sep=sep)
+        rename_dict = {}
+        for c in df.columns:
+            uc = str(c).upper()
+            if uc in SYNONYM_MAP:
+                rename_dict[c] = SYNONYM_MAP[uc]
+            else:
+                rename_dict[c] = uc
+        df = df.rename(columns=rename_dict)
         total_variants_pre = len(df)
 
         if "P" in df.columns:
@@ -82,7 +126,6 @@ def process_gwas(input_path, output_path, qc_summary_path, filter_indels=True):
         else:
             df.to_csv(output_path, sep='\t', index=False)
 
-    # Write summary
     summary = {
         "TotalVariantsPreQC": total_variants_pre,
         "TotalVariantsPostQC": total_variants_post,
@@ -100,7 +143,7 @@ def process_gwas(input_path, output_path, qc_summary_path, filter_indels=True):
 
 def main():
     parser = argparse.ArgumentParser(description="GE2TS GWAS Prep and QC")
-    parser.add_argument("--input", required=True, help="Input GWAS file (TSV/TSV.gz)")
+    parser.add_argument("--input", required=True, help="Input GWAS file (TSV/CSV/TSV.gz)")
     parser.add_argument("--output-tsv", required=True, help="Output standardized GWAS file path")
     parser.add_argument("--qc-summary", required=True, help="Output JSON QC summary path")
     parser.add_argument("--filter-indels", action="store_true", default=True, help="Filter out indels")

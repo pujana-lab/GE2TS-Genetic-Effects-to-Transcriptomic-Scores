@@ -30,6 +30,28 @@ def test_process_gwas():
         assert summary["FilteredIndels"] == 1
         assert summary["TotalVariantsPostQC"] == 4
 
+def test_process_gwas_csv_synonyms():
+    csv_content = 'MarkerName,CHR,position,Allele1,Allele2,Effect,StdErr,P-value\nrs2001,1,12345,A,G,0.12,0.05,0.003\n'
+    with tempfile.TemporaryDirectory() as tmpdir:
+        csv_path = os.path.join(tmpdir, "input.csv")
+        with open(csv_path, "w") as f:
+            f.write(csv_content)
+
+        output_tsv = os.path.join(tmpdir, "out_synonyms.tsv")
+        qc_summary = os.path.join(tmpdir, "qc_synonyms.json")
+
+        process_gwas(
+            input_path=csv_path,
+            output_path=output_tsv,
+            qc_summary_path=qc_summary,
+            filter_indels=True
+        )
+
+        assert os.path.exists(output_tsv)
+        with open(qc_summary, "r") as f:
+            summary = json.load(f)
+        assert summary["TotalVariantsPostQC"] == 1
+
 def test_process_gwas_gz_output():
     input_path = "assets/test_data/sample_gwas.tsv"
     

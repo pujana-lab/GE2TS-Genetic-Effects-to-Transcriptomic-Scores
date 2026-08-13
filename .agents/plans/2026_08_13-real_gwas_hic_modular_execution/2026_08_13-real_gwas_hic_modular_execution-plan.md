@@ -9,6 +9,16 @@ created_by:
     name: "Gemini"
     version: "3.6-flash"
     reasoning_effort: "high"
+
+implemented_by:
+  tool: "opencode"
+  model:
+    name: "Gemini"
+    version: "3.6-flash"
+    reasoning_effort: "high"
+
+last_implementation_at: "2026-08-13T00:00:00Z"
+has_completed_all_phases: false
 ---
 
 # Goal
@@ -47,10 +57,10 @@ Enhance the GE2TS pipeline to seamlessly process real-world GWAS datasets (such 
 Enhance `bin/gwas_prep.py` to automatically detect CSV vs TSV delimiters and map non-standard column names (e.g. `MarkerName`, `position`, `Allele1`, `Allele2`, `Effect`, `StdErr`, `P-value`) to standard GE2TS names, adding comprehensive unit tests.
 
 ### To-do Actions List
-- [ ] Update `bin/gwas_prep.py` with separator auto-detection and synonym column renaming dictionary.
-- [ ] Add unit test in `tests/bin/test_gwas_prep.py` covering comma-separated GWAS with alternate column headers.
-- [ ] Verify the changes in terms of typechecking, linting and tests using the project's verification command (look it up in the AGENTS.md file or the project configuration). Fix issues if any.
-- [ ] STOP. Present the changes to the user for review and suggest commit messages (or pull request titles, when the phases are implemented through pull requests). Do NOT proceed to the next phase until the user explicitly asks.
+- [x] Update `bin/gwas_prep.py` with separator auto-detection and synonym column renaming dictionary.
+- [x] Add unit test in `tests/bin/test_gwas_prep.py` covering comma-separated GWAS with alternate column headers.
+- [x] Verify the changes in terms of typechecking, linting and tests using the project's verification command (look it up in the AGENTS.md file or the project configuration). Fix issues if any.
+- [x] STOP. Present the changes to the user for review and suggest commit messages (or pull request titles, when the phases are implemented through pull requests). Do NOT proceed to the next phase until the user explicitly asks.
 
 ## Phase 2: Hi-C BED Annotation & PLINK Multi-file Handling
 
@@ -79,6 +89,6 @@ Configure `main.nf`, `workflows/ge2ts.nf`, and `nextflow.config` to support modu
 
 # Next step
 
-The next step is to start Phase 1 to implement CSV auto-delimiter detection and synonym column mapping in `bin/gwas_prep.py`.
+The next step is to implement Phase 2 for Hi-C BED region annotation support in MAGMA wrapper and Nextflow modules.
 
-Plan created by 🐢 💨 (Turbotuga™, [Codely](https://codely.com)’s mascot)
+Phase 1 completed with 🛠️ 📊 by 🐢 💨 (Turbotuga™, [Codely](https://codely.com)’s mascot)
