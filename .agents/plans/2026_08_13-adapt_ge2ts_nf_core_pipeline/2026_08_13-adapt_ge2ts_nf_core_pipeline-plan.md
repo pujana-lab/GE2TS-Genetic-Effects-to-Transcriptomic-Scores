@@ -65,11 +65,11 @@ Establish the nf-core directory structure, create small synthetic/dummy test dat
 Implement the `MAGMA_ANNOT_RUN` vertical slice to handle gene annotation (10kb, 100kb, or Hi-C windows) and gene-based association analysis using MAGMA, including container/tool execution and error handling.
 
 ### To-do Actions List
-- [ ] Implement Nextflow DSL2 module `modules/local/magma_annot_run.nf` handling annotation and gene analysis steps.
-- [ ] Add configuration handling in `conf/modules.config` for MAGMA window sizes (10kb, 100kb, Hi-C) and binary arguments.
-- [ ] Create test case validating `MAGMA_ANNOT_RUN` module execution using dummy/mocked MAGMA outputs.
-- [ ] Verify the changes in terms of typechecking, linting and tests using the project's verification command (look it up in the AGENTS.md file or the project configuration). Fix issues if any.
-- [ ] STOP. Present the changes to the user for review and suggest commit messages (or pull request titles, when the phases are implemented through pull requests). Do NOT proceed to the next phase until the user explicitly asks.
+- [x] Implement Nextflow DSL2 module `modules/local/magma_annot_run.nf` handling annotation and gene analysis steps.
+- [x] Add configuration handling in `conf/modules.config` for MAGMA window sizes (10kb, 100kb, Hi-C) and binary arguments.
+- [x] Create test case validating `MAGMA_ANNOT_RUN` module execution using dummy/mocked MAGMA outputs.
+- [x] Verify the changes in terms of typechecking, linting and tests using the project's verification command (look it up in the AGENTS.md file or the project configuration). Fix issues if any.
+- [x] STOP. Present the changes to the user for review and suggest commit messages (or pull request titles, when the phases are implemented through pull requests). Do NOT proceed to the next phase until the user explicitly asks.
 
 ## Phase 3: `QC_GSEA` Module & Transcriptomic Scoring
 
@@ -98,6 +98,6 @@ Assemble the complete end-to-end Nextflow workflow in `workflows/ge2ts.nf` and `
 
 # Next step
 
-The next step is to implement Phase 2 to create the `MAGMA_ANNOT_RUN` Nextflow DSL2 module and its configuration handlers.
+The next step is to implement Phase 3 to create the `QC_GSEA` module for pathway enrichment and transcriptomic score calculation.
 
-First step completed with 🧪 ⚙️ by 🐢 💨 (Turbotuga™, [Codely](https://codely.com)’s mascot)
+MAGMA gene analysis leveled up with 🧬 📊 by 🐢 💨 (Turbotuga™, [Codely](https://codely.com)’s mascot)
