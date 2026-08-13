@@ -77,11 +77,11 @@ Implement the `MAGMA_ANNOT_RUN` vertical slice to handle gene annotation (10kb, 
 Implement the `QC_GSEA` vertical slice to process MAGMA gene output files, perform Gene Set Enrichment Analysis (GSEA) against pathway databases, and compile the final mapping QC summary matrix.
 
 ### To-do Actions List
-- [ ] Implement `bin/qc_gsea.py` to run pathway enrichment on gene scores and format output matrices.
-- [ ] Create unit tests in `tests/bin/test_qc_gsea.py` verifying pathway scoring logic with dummy pathways GMT.
-- [ ] Implement Nextflow DSL2 module `modules/local/qc_gsea.nf` wrapping `bin/qc_gsea.py`.
-- [ ] Verify the changes in terms of typechecking, linting and tests using the project's verification command (look it up in the AGENTS.md file or the project configuration). Fix issues if any.
-- [ ] STOP. Present the changes to the user for review and suggest commit messages (or pull request titles, when the phases are implemented through pull requests). Do NOT proceed to the next phase until the user explicitly asks.
+- [x] Implement `bin/qc_gsea.py` to run pathway enrichment on gene scores and format output matrices.
+- [x] Create unit tests in `tests/bin/test_qc_gsea.py` verifying pathway scoring logic with dummy pathways GMT.
+- [x] Implement Nextflow DSL2 module `modules/local/qc_gsea.nf` wrapping `bin/qc_gsea.py`.
+- [x] Verify the changes in terms of typechecking, linting and tests using the project's verification command (look it up in the AGENTS.md file or the project configuration). Fix issues if any.
+- [x] STOP. Present the changes to the user for review and suggest commit messages (or pull request titles, when the phases are implemented through pull requests). Do NOT proceed to the next phase until the user explicitly asks.
 
 ## Phase 4: Workflow Integration, Configuration & End-to-End Pipeline
 
@@ -98,6 +98,6 @@ Assemble the complete end-to-end Nextflow workflow in `workflows/ge2ts.nf` and `
 
 # Next step
 
-The next step is to implement Phase 3 to create the `QC_GSEA` module for pathway enrichment and transcriptomic score calculation.
+The next step is to implement Phase 4 for parameter schema validation, container profile refinement, and final end-to-end pipeline verification.
 
-MAGMA gene analysis leveled up with 🧬 📊 by 🐢 💨 (Turbotuga™, [Codely](https://codely.com)’s mascot)
+Transcriptomic scoring & GSEA enrichment unlocked 🧬 🔬 by 🐢 💨 (Turbotuga™, [Codely](https://codely.com)’s mascot)

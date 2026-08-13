@@ -24,11 +24,13 @@ workflow {
 
     ch_bfile    = params.bfile ? Channel.fromPath(params.bfile, checkIfExists: true) : Channel.empty()
     ch_gene_loc = params.gene_loc ? Channel.fromPath(params.gene_loc, checkIfExists: true) : Channel.empty()
+    ch_pathways = params.pathways ? Channel.fromPath(params.pathways, checkIfExists: true) : Channel.empty()
 
     // 2. Run workflow
     GE2TS(
         ch_input,
         ch_bfile,
-        ch_gene_loc
+        ch_gene_loc,
+        ch_pathways
     )
 }
