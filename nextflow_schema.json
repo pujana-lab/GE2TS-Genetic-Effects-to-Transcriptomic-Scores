@@ -8,12 +8,19 @@
     "input_options": {
       "title": "Input/output options",
       "type": "object",
-      "required": ["input", "outdir"],
+      "required": ["outdir"],
       "properties": {
         "input": {
           "type": "string",
-          "description": "Path to GWAS summary statistics input file (.tsv or .tsv.gz)",
-          "mimetype": "text/tab-separated-values"
+          "description": "Path to raw GWAS summary statistics input file (.tsv or .tsv.gz)"
+        },
+        "input_prep": {
+          "type": "string",
+          "description": "Path to pre-prepared GWAS file (skips GWAS_PREP step)"
+        },
+        "input_genes_out": {
+          "type": "string",
+          "description": "Path to pre-computed MAGMA genes output (skips GWAS_PREP and MAGMA_ANNOT_RUN steps)"
         },
         "bfile": {
           "type": "string",
@@ -23,9 +30,25 @@
           "type": "string",
           "description": "Path to gene location file (e.g. NCBI37.3.gene.loc)"
         },
+        "hic_bed": {
+          "type": "string",
+          "description": "Optional Hi-C mappable regions BED file"
+        },
         "pathways": {
           "type": "string",
           "description": "Path to pathway database in GMT format"
+        },
+        "stop_at_prep": {
+          "type": "boolean",
+          "description": "Stop pipeline after GWAS preparation step"
+        },
+        "skip_magma": {
+          "type": "boolean",
+          "description": "Alias for stop_at_prep"
+        },
+        "skip_gsea": {
+          "type": "boolean",
+          "description": "Stop pipeline after MAGMA gene analysis step"
         },
         "outdir": {
           "type": "string",

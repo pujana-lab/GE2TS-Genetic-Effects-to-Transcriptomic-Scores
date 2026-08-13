@@ -18,7 +18,7 @@ implemented_by:
     reasoning_effort: "high"
 
 last_implementation_at: "2026-08-13T00:00:00Z"
-has_completed_all_phases: false
+has_completed_all_phases: true
 ---
 
 # Goal
@@ -68,11 +68,11 @@ Enhance `bin/gwas_prep.py` to automatically detect CSV vs TSV delimiters and map
 Extend `bin/magma_wrapper.py` and `modules/local/magma_annot_run.nf` to support optional Hi-C region annotation via `--hic-bed` and robust handling of PLINK reference file bundles.
 
 ### To-do Actions List
-- [ ] Update `bin/magma_wrapper.py` to accept `--hic-bed` and integrate Hi-C regions into annotation or mock generation.
-- [ ] Update `modules/local/magma_annot_run.nf` to handle PLINK reference sets and optional Hi-C BED files.
-- [ ] Add unit test in `tests/bin/test_magma_wrapper.py` verifying Hi-C BED integration in mock mode.
-- [ ] Verify the changes in terms of typechecking, linting and tests using the project's verification command (look it up in the AGENTS.md file or the project configuration). Fix issues if any.
-- [ ] STOP. Present the changes to the user for review and suggest commit messages (or pull request titles, when the phases are implemented through pull requests). Do NOT proceed to the next phase until the user explicitly asks.
+- [x] Update `bin/magma_wrapper.py` to accept `--hic-bed` and integrate Hi-C regions into annotation or mock generation.
+- [x] Update `modules/local/magma_annot_run.nf` to handle PLINK reference sets and optional Hi-C BED files.
+- [x] Add unit test in `tests/bin/test_magma_wrapper.py` verifying Hi-C BED integration in mock mode.
+- [x] Verify the changes in terms of typechecking, linting and tests using the project's verification command (look it up in the AGENTS.md file or the project configuration). Fix issues if any.
+- [x] STOP. Present the changes to the user for review and suggest commit messages (or pull request titles, when the phases are implemented through pull requests). Do NOT proceed to the next phase until the user explicitly asks.
 
 ## Phase 3: Modular Pipeline Entry Points & Step Control Flags
 
@@ -80,15 +80,15 @@ Extend `bin/magma_wrapper.py` and `modules/local/magma_annot_run.nf` to support 
 Configure `main.nf`, `workflows/ge2ts.nf`, and `nextflow.config` to support modular execution entry points (`--input_prep`, `--input_genes_out`) and stop flags (`--stop_at_prep`, `--skip_gsea`), validating with end-to-end tests.
 
 ### To-do Actions List
-- [ ] Update `workflows/ge2ts.nf` and `main.nf` to branch channels based on `--input`, `--input_prep`, or `--input_genes_out`.
-- [ ] Implement stop/skip conditional logic (`--stop_at_prep`, `--skip_gsea`) in `main.nf` and `workflows/ge2ts.nf`.
-- [ ] Update `nextflow_schema.json` and `nextflow.config` with new parameters.
-- [ ] Run end-to-end test with real CIMBA/dummy sample inputs and verify all workflows.
-- [ ] Verify the changes in terms of typechecking, linting and tests using the project's verification command (look it up in the AGENTS.md file or the project configuration). Fix issues if any.
-- [ ] STOP. Present the changes to the user for review and suggest commit messages (or pull request titles, when the phases are implemented through pull requests). Do NOT proceed to the next phase until the user explicitly asks.
+- [x] Update `workflows/ge2ts.nf` and `main.nf` to branch channels based on `--input`, `--input_prep`, or `--input_genes_out`.
+- [x] Implement stop/skip conditional logic (`--stop_at_prep`, `--skip_gsea`) in `main.nf` and `workflows/ge2ts.nf`.
+- [x] Update `nextflow_schema.json` and `nextflow.config` with new parameters.
+- [x] Run end-to-end test with real CIMBA/dummy sample inputs and verify all workflows.
+- [x] Verify the changes in terms of typechecking, linting and tests using the project's verification command (look it up in the AGENTS.md file or the project configuration). Fix issues if any.
+- [x] STOP. Present the changes to the user for review and suggest commit messages (or pull request titles, when the phases are implemented through pull requests). Do NOT proceed to the next phase until the user explicitly asks.
 
 # Next step
 
-The next step is to implement Phase 2 for Hi-C BED region annotation support in MAGMA wrapper and Nextflow modules.
+All phases of the real GWAS, Hi-C, and modular execution adaptation plan have been fully completed and verified!
 
-Phase 1 completed with 🛠️ 📊 by 🐢 💨 (Turbotuga™, [Codely](https://codely.com)’s mascot)
+Pipeline ready for real GWAS and Hi-C analysis with 🚀 🧬 by 🐢 💨 (Turbotuga™, [Codely](https://codely.com)’s mascot)
