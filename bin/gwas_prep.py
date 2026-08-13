@@ -90,7 +90,9 @@ def process_gwas(input_path, output_path, qc_summary_path, filter_indels=True):
         "RemovedInvalidP": total_variants_pre - total_variants_post - indels_count
     }
 
-    os.makedirs(os.path.dirname(qc_summary_path), exist_ok=True)
+    out_dir = os.path.dirname(qc_summary_path)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
     with open(qc_summary_path, "w") as f:
         json.dump(summary, f, indent=2)
 
