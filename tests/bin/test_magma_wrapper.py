@@ -1,6 +1,7 @@
 import os
 import sys
 import tempfile
+import subprocess
 import pandas as pd
 from bin.magma_wrapper import run_magma, main
 
@@ -30,6 +31,50 @@ def test_run_magma_mock():
         assert "SYMBOL" in df.columns
         assert "P" in df.columns
         assert len(df) == 3
+
+def test_run_magma_mock_nonexistent_gwas():
+    gwas_path = "assets/test_data/non_existent.tsv"
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        out_prefix = os.path.join(tmpdir, "test_nonexistent")
+        
+        run_magma(
+            gwas_path=gwas_path,
+            bfile_prefix="dummy_ref",
+            gene_loc="dummy.gene.loc",
+            window="10,10",
+            out_prefix=out_prefix,
+            sample_size="10000",
+            mock=True
+        )
+
+        assert os.path.exists(f"{out_prefix}.genes.out")
+
+def test_run_magma_real_binary_simulated(monkeypatch):
+    gwas_path = "assets/test_data/sample_gwas.tsv"
+
+    class DummyCompletedProcess:
+        returncode = 0
+        stdout = "MAGMA v1.10"
+        stderr = ""
+
+    def dummy_run(cmd, capture_output=False, text=False, check=False):
+        return DummyCompletedProcess()
+
+    monkeypatch.setattr(subprocess, "run", dummy_run)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        out_prefix = os.path.join(tmpdir, "test_real_sim")
+        
+        run_magma(
+            gwas_path=gwas_path,
+            bfile_prefix="dummy_ref",
+            gene_loc="dummy.gene.loc",
+            window="10,10",
+            out_prefix=out_prefix,
+            sample_size="10000",
+            mock=False
+        )
 
 def test_magma_wrapper_cli(monkeypatch):
     gwas_path = "assets/test_data/sample_gwas.tsv"

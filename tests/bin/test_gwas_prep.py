@@ -46,6 +46,31 @@ def test_process_gwas_gz_output():
 
         assert os.path.exists(output_gz)
 
+def test_process_gwas_pandas_fallback(monkeypatch):
+    input_path = "assets/test_data/sample_gwas.tsv"
+    monkeypatch.setitem(sys.modules, "polars", None)
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        output_tsv = os.path.join(tmpdir, "out_pandas.tsv")
+        output_gz = os.path.join(tmpdir, "out_pandas.tsv.gz")
+        qc_summary = os.path.join(tmpdir, "qc_summary_pandas.json")
+
+        process_gwas(
+            input_path=input_path,
+            output_path=output_tsv,
+            qc_summary_path=qc_summary,
+            filter_indels=True
+        )
+        assert os.path.exists(output_tsv)
+
+        process_gwas(
+            input_path=input_path,
+            output_path=output_gz,
+            qc_summary_path=qc_summary,
+            filter_indels=True
+        )
+        assert os.path.exists(output_gz)
+
 def test_gwas_prep_cli(monkeypatch):
     input_path = "assets/test_data/sample_gwas.tsv"
     
