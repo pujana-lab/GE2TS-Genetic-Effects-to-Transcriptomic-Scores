@@ -21,11 +21,12 @@ process MAGMA_ANNOT_RUN {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def window = task.ext.window ?: '10,10'
+    def bfile_prefix = bfile instanceof List ? bfile[0].baseName : file(bfile).baseName
     def hic_arg = hic_bed && hic_bed.name != 'NO_FILE' ? "--hic-bed hic_regions.bed" : ''
     """
     magma_wrapper.py \\
         --gwas ${prep_gwas} \\
-        --bfile ${bfile} \\
+        --bfile ${bfile_prefix} \\
         --gene-loc ${gene_loc} \\
         --window ${window} \\
         --out-prefix ${prefix} \\

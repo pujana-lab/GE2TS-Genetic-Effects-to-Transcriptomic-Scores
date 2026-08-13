@@ -70,7 +70,7 @@ workflow {
     ch_prep         = params.input_prep ? Channel.fromPath(params.input_prep, checkIfExists: true).map { file -> [ [id: file.getSimpleName().replaceAll(/\.prep$/, '')], file ] } : Channel.empty()
     ch_genes_out    = params.input_genes_out ? Channel.fromPath(params.input_genes_out, checkIfExists: true).map { file -> [ [id: file.getSimpleName().replaceAll(/\.genes$/, '')], file ] } : Channel.empty()
 
-    ch_bfile        = params.bfile ? Channel.fromPath(params.bfile, checkIfExists: true) : Channel.empty()
+    ch_bfile        = params.bfile ? Channel.fromPath("${params.bfile}.{bed,bim,fam}", checkIfExists: true).collect() : Channel.empty()
     ch_gene_loc     = params.gene_loc ? Channel.fromPath(params.gene_loc, checkIfExists: true) : Channel.empty()
     ch_hic_bed      = params.hic_bed ? Channel.fromPath(params.hic_bed, checkIfExists: true) : Channel.value(file('NO_FILE'))
     ch_pathways     = params.pathways ? Channel.fromPath(params.pathways, checkIfExists: true) : Channel.empty()

@@ -14,6 +14,7 @@ import csv
 
 SYNONYM_MAP = {
     "MARKERNAME": "SNP",
+    "RS_ID": "SNP",
     "POSITION": "BP",
     "ALLELE1": "A1",
     "ALLELE2": "A2",
@@ -21,7 +22,12 @@ SYNONYM_MAP = {
     "STDERR": "SE",
     "P-VALUE": "P",
     "PVAL": "P",
-    "P_VAL": "P"
+    "P_VAL": "P",
+    "ONCO_ICOGS_EFFECT": "A1",
+    "ONCO_ICOGS_BASELINE": "A2",
+    "ONCO_ICOGS_BC_EFFECT": "BETA",
+    "ONCO_ICOGS_BC_SE": "SE",
+    "ONCO_ICOGS_BC_PVAL": "P"
 }
 
 def detect_delimiter(file_path):
