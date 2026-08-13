@@ -12,4 +12,5 @@ Welcome to the **GE2TS** repository. This project implements a modular Nextflow 
 
 - [nf-core Standard DSL2 Architecture](docs/pipeline/nf-core-dsl2-architecture.md)
 - [Modular Step-by-Step Pipeline Execution](docs/pipeline/modular-step-by-step-pipeline-execution.md)
+- [Real GWAS Ingestion and Hi-C Integration](docs/pipeline/real-gwas-hic-ingestion.md)
 - [Mock Wrappers and Pytest Convention](docs/testing/mock-wrappers-and-pytest.md)
