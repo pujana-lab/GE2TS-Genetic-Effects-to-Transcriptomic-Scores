@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 GE2TS - GWAS Preparation & Quality Control Script
-Auto-detects delimiter (CSV/TSV), maps column synonyms, checks P-value validity, 
-calculates Z-score, and filters indels/invalid variants.
+Auto-detects delimiter (CSV/TSV), maps column synonyms, cleans ragged lines, 
+checks P-value validity, calculates Z-score, and filters indels/invalid variants.
 """
 
 import argparse
@@ -16,6 +16,8 @@ SYNONYM_MAP = {
     "MARKERNAME": "SNP",
     "RS_ID": "SNP",
     "POSITION": "BP",
+    "BP": "BP",
+    "CHR": "CHR",
     "ALLELE1": "A1",
     "ALLELE2": "A2",
     "EFFECT": "BETA",
@@ -23,6 +25,7 @@ SYNONYM_MAP = {
     "P-VALUE": "P",
     "PVAL": "P",
     "P_VAL": "P",
+    "P": "P",
     "ONCO_ICOGS_EFFECT": "A1",
     "ONCO_ICOGS_BASELINE": "A2",
     "ONCO_ICOGS_BC_EFFECT": "BETA",
@@ -31,7 +34,6 @@ SYNONYM_MAP = {
 }
 
 def detect_delimiter(file_path):
-    # Peek at first line
     try:
         open_func = gzip.open if file_path.endswith('.gz') else open
         with open_func(file_path, 'rt', encoding='utf-8', errors='ignore') as f:
@@ -53,13 +55,11 @@ def process_gwas(input_path, output_path, qc_summary_path, filter_indels=True):
 
     if use_polars:
         try:
-            df = pl.read_csv(input_path, separator=sep, infer_schema_length=0, null_values=["NULL", "NA", "nan"])
+            df = pl.read_csv(input_path, separator=sep, infer_schema_length=0, null_values=["NULL", "NA", "nan", ""])
         except Exception:
-            # Fallback to pandas if polars fails on complex CSV
             use_polars = False
 
     if use_polars:
-        # Standardize uppercase column names
         rename_dict = {}
         for c in df.columns:
             uc = c.upper()
@@ -83,6 +83,11 @@ def process_gwas(input_path, output_path, qc_summary_path, filter_indels=True):
         if "P" in df.columns:
             df = df.filter((pl.col("P") > 0) & (pl.col("P") <= 1))
         
+        # Drop rows with nulls in essential columns to clean ragged lines
+        essential = [c for c in ["SNP", "CHR", "BP", "P"] if c in df.columns]
+        if essential:
+            df = df.drop_nulls(subset=essential)
+
         # Indel filtering if required
         indels_count = 0
         if filter_indels and "A1" in df.columns and "A2" in df.columns:
@@ -91,6 +96,10 @@ def process_gwas(input_path, output_path, qc_summary_path, filter_indels=True):
             df = df.filter(is_snp)
 
         total_variants_post = len(df)
+
+        # Select standard columns only
+        standard_cols = [c for c in ["SNP", "CHR", "BP", "A1", "A2", "BETA", "SE", "P"] if c in df.columns]
+        df = df.select(standard_cols)
 
         if output_path.endswith(".gz"):
             temp_path = output_path.replace(".gz", ".tmp")
@@ -104,7 +113,7 @@ def process_gwas(input_path, output_path, qc_summary_path, filter_indels=True):
 
     else:
         import pandas as pd
-        df = pd.read_csv(input_path, sep=sep)
+        df = pd.read_csv(input_path, sep=sep, low_memory=False)
         rename_dict = {}
         for c in df.columns:
             uc = str(c).upper()
@@ -119,6 +128,10 @@ def process_gwas(input_path, output_path, qc_summary_path, filter_indels=True):
             df["P"] = pd.to_numeric(df["P"], errors="coerce")
             df = df[(df["P"] > 0) & (df["P"] <= 1)]
 
+        essential = [c for c in ["SNP", "CHR", "BP", "P"] if c in df.columns]
+        if essential:
+            df = df.dropna(subset=essential)
+
         indels_count = 0
         if filter_indels and "A1" in df.columns and "A2" in df.columns:
             is_snp = (df["A1"].astype(str).str.len() == 1) & (df["A2"].astype(str).str.len() == 1)
@@ -126,6 +139,9 @@ def process_gwas(input_path, output_path, qc_summary_path, filter_indels=True):
             df = df[is_snp]
 
         total_variants_post = len(df)
+
+        standard_cols = [c for c in ["SNP", "CHR", "BP", "A1", "A2", "BETA", "SE", "P"] if c in df.columns]
+        df = df[standard_cols]
 
         if output_path.endswith(".gz"):
             df.to_csv(output_path, sep='\t', index=False, compression='gzip')
