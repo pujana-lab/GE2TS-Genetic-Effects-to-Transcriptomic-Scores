@@ -14,10 +14,15 @@ import pandas as pd
 def run_magma(gwas_path, bfile_prefix, gene_loc, window, out_prefix, sample_size, hic_bed=None, magma_bin_path=None, mock=False):
     magma_bin = magma_bin_path or os.environ.get("MAGMA_BIN", "magma")
     
+    # Dynamically resolve relative sibling path for magma if needed
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(current_dir)
+    default_sibling_magma = os.path.normpath(os.path.join(project_root, "..", "gwas-magma-pipeline", "bin", "magma_v1.10", "magma"))
+
     # Check if MAGMA binary is installed
     has_magma = False
     if not mock:
-        candidates = [magma_bin, "/home/luis/Documentos/projects/tools/gwas-magma-pipeline/bin/magma_v1.10/magma"]
+        candidates = [magma_bin, default_sibling_magma]
         for candidate in candidates:
             try:
                 res = subprocess.run([candidate, "--version"], capture_output=True, text=True)
