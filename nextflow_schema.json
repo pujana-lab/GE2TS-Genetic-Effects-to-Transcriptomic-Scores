@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/GE2TS/master/nextflow_schema.json",
+  "title": "GE2TS pipeline parameters",
+  "description": "Genetic Effects to Transcriptomic Scores Pipeline",
+  "type": "object",
+  "definitions": {
+    "input_options": {
+      "title": "Input/output options",
+      "type": "object",
+      "required": ["input", "outdir"],
+      "properties": {
+        "input": {
+          "type": "string",
+          "description": "Path to GWAS summary statistics input file (.tsv or .tsv.gz)",
+          "mimetype": "text/tab-separated-values"
+        },
+        "bfile": {
+          "type": "string",
+          "description": "Path or prefix to PLINK binary reference dataset"
+        },
+        "gene_loc": {
+          "type": "string",
+          "description": "Path to gene location file (e.g. NCBI37.3.gene.loc)"
+        },
+        "pathways": {
+          "type": "string",
+          "description": "Path to pathway database in GMT format"
+        },
+        "outdir": {
+          "type": "string",
+          "description": "The output directory where the results will be saved"
+        }
+      }
+    }
+  },
+  "allOf": [
+    { "$ref": "#/definitions/input_options" }
+  ]
+}
