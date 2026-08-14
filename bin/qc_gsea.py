@@ -13,9 +13,9 @@ from scipy.stats import norm
 import pandas as pd
 
 try:
-    from bin.engine import get_engine, HAS_POLARS
+    from bin.engine import get_engine
 except ModuleNotFoundError:
-    from engine import get_engine, HAS_POLARS
+    from engine import get_engine
 
 def parse_gmt(gmt_path):
     pathways = {}
@@ -36,17 +36,7 @@ def load_genes_data(genes_out_path, gene_loc=None):
         raise FileNotFoundError(f"MAGMA genes file not found: {genes_out_path}")
 
     engine = get_engine()
-    if engine.engine == 'polars':
-        import polars as pl
-        try:
-            genes_df = pl.read_csv(genes_out_path, separator='\t').to_pandas()
-        except Exception:
-            genes_df = pd.read_csv(genes_out_path, sep=r'\s+', engine='python')
-    else:
-        try:
-            genes_df = pd.read_csv(genes_out_path, sep=r'\s+', engine='python')
-        except Exception:
-            genes_df = pd.read_csv(genes_out_path, sep='\t')
+    genes_df = engine.read_genes_out(genes_out_path)
 
     genes_df.columns = [c.upper() for c in genes_df.columns]
     
@@ -124,10 +114,9 @@ def generate_gsea_html_report(phenotype, genes_df, pathway_df, html_out_path):
     top_pathway = pathway_df.iloc[0]["PATHWAY"] if not pathway_df.empty else "N/A"
     top_p = pathway_df.iloc[0]["P_VALUE"] if not pathway_df.empty else 1.0
 
-    table_rows = ""
     if not pathway_df.empty:
-        for _, row in pathway_df.iterrows():
-            table_rows += f"""
+        table_rows = "\n".join([
+            f"""
             <tr>
                 <td><strong>{row['PATHWAY']}</strong></td>
                 <td>{row['N_GENES']}</td>
@@ -139,6 +128,8 @@ def generate_gsea_html_report(phenotype, genes_df, pathway_df, html_out_path):
                 <td><code>{row['P_VALUE']}</code></td>
             </tr>
             """
+            for _, row in pathway_df.iterrows()
+        ])
     else:
         table_rows = "<tr><td colspan='8'>No pathway enrichment results available.</td></tr>"
 

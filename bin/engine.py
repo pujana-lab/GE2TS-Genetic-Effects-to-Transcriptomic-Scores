@@ -18,6 +18,17 @@ class DataEngine:
         else:
             return pd.read_csv(file_path, sep=separator, **kwargs)
 
+    def read_genes_out(self, genes_out_path):
+        if self.engine == 'polars':
+            try:
+                return pl.read_csv(genes_out_path, separator='\t').to_pandas()
+            except Exception:
+                pass
+        try:
+            return pd.read_csv(genes_out_path, sep=r'\s+', engine='python')
+        except Exception:
+            return pd.read_csv(genes_out_path, sep='\t')
+
     def load_bim_and_create_maps(self, bim_file):
         if self.engine == 'polars':
             ref = pl.read_csv(
