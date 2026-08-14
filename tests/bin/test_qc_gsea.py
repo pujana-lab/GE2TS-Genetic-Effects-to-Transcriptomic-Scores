@@ -86,6 +86,22 @@ def test_generate_gsea_html_report_empty():
             html = f.read()
             assert "No pathway enrichment results available" in html
 
+def test_load_html_template_custom_and_fallback(monkeypatch):
+    from bin.qc_gsea import load_html_template
+    # Custom template file
+    with tempfile.TemporaryDirectory() as tmpdir:
+        custom_tpl = os.path.join(tmpdir, "custom.html")
+        with open(custom_tpl, "w") as f:
+            f.write("<html><body>{phenotype}</body></html>")
+            
+        tpl = load_html_template(custom_tpl)
+        assert "{phenotype}" in tpl
+
+    # Fallback template
+    monkeypatch.setattr(os.path, "exists", lambda path: False)
+    tpl_fallback = load_html_template("non_existent.html")
+    assert "<html>" in tpl_fallback
+
 def test_load_genes_data_nonexistent():
     with pytest.raises(FileNotFoundError):
         load_genes_data("non_existent.genes.out")
