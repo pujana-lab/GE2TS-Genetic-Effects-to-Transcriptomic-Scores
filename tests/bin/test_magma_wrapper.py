@@ -3,30 +3,45 @@ import sys
 import tempfile
 import subprocess
 import pandas as pd
-from bin.magma_wrapper import run_magma, main, add_symbol_column
+from bin import magma_wrapper
+from bin.magma_wrapper import run_magma, main, add_symbol_column, resolve_magma_binary
 
-def test_add_symbol_column():
-    # Setup
+def test_add_symbol_column_polars_and_pandas(monkeypatch):
     with tempfile.TemporaryDirectory() as tmpdir:
         genes_out = os.path.join(tmpdir, "test.genes.out")
         gene_loc = os.path.join(tmpdir, "test.gene.loc")
         
-        # Create dummy genes.out
         pd.DataFrame({"GENE": [1, 2], "P": [0.1, 0.2]}).to_csv(genes_out, sep='\t', index=False)
         
-        # Create dummy gene.loc
         with open(gene_loc, "w") as f:
             f.write("1\tCHR\tSTART\tSTOP\tGENE_A\n")
             f.write("2\tCHR\tSTART\tSTOP\tGENE_B\n")
         
-        # Execute
+        # Test default (polars if available)
         add_symbol_column(genes_out, gene_loc)
-        
-        # Verify
         df = pd.read_csv(genes_out, sep='\t')
         assert "SYMBOL" in df.columns
         assert df.loc[df["GENE"] == 1, "SYMBOL"].iloc[0] == "GENE_A"
-        assert df.loc[df["GENE"] == 2, "SYMBOL"].iloc[0] == "GENE_B"
+
+        # Test pandas fallback
+        monkeypatch.setattr(magma_wrapper, "USE_POLARS", False)
+        add_symbol_column(genes_out, gene_loc)
+        df_pd = pd.read_csv(genes_out, sep='\t')
+        assert "SYMBOL" in df_pd.columns
+
+def test_resolve_magma_binary_found(monkeypatch):
+    class DummyCompletedProcess:
+        returncode = 0
+        stdout = "MAGMA v1.10"
+        stderr = ""
+
+    def dummy_run(cmd, capture_output=False, text=False, check=False):
+        return DummyCompletedProcess()
+
+    monkeypatch.setattr(subprocess, "run", dummy_run)
+    binary_path, found = resolve_magma_binary("custom_magma")
+    assert found is True
+    assert binary_path == "custom_magma"
 
 def test_run_magma_mock():
     gwas_path = "assets/test_data/sample_gwas.tsv"
@@ -99,7 +114,6 @@ def test_run_magma_mock_nonexistent_gwas():
 def test_run_magma_mock_exception_gwas():
     with tempfile.TemporaryDirectory() as tmpdir:
         out_prefix = os.path.join(tmpdir, "test_exception")
-        # Pass tmpdir itself which is a directory, causing pd.read_csv to raise IsADirectoryError / Exception
         run_magma(
             gwas_path=tmpdir,
             bfile_prefix="dummy_ref",

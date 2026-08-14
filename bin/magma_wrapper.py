@@ -10,44 +10,100 @@ import os
 import sys
 import subprocess
 import pandas as pd
+try:
+    import polars as pl
+    USE_POLARS = True
+except ImportError:
+    USE_POLARS = False
 
 def add_symbol_column(genes_out, gene_loc):
     if not os.path.exists(gene_loc):
         return
     try:
-        # Read .genes.out
-        genes_df = pd.read_csv(genes_out, sep='\s+')
-        # Read gene_loc (assuming format: ID ... SYMBOL)
-        loc_df = pd.read_csv(gene_loc, sep='\s+', header=None)
-        # Mapping ID (col 0) to SYMBOL (last col)
-        mapping = dict(zip(loc_df[0], loc_df[loc_df.columns[-1]]))
-        genes_df['SYMBOL'] = genes_df['GENE'].map(mapping)
-        genes_df.to_csv(genes_out, sep='\t', index=False)
+        if USE_POLARS:
+            genes_df = pl.read_csv(genes_out, separator='\t')
+            loc_df = pl.read_csv(gene_loc, separator='\t', has_header=False)
+            mapping_df = loc_df.select([pl.col(loc_df.columns[0]).alias("GENE"), pl.col(loc_df.columns[-1]).alias("SYMBOL")])
+            genes_df = genes_df.join(mapping_df, on="GENE", how="left")
+            genes_df.write_csv(genes_out, separator='\t')
+        else:
+            genes_df = pd.read_csv(genes_out, sep=r'\s+')
+            loc_df = pd.read_csv(gene_loc, sep=r'\s+', header=None)
+            mapping = dict(zip(loc_df[0], loc_df[loc_df.columns[-1]]))
+            genes_df['SYMBOL'] = genes_df['GENE'].map(mapping)
+            genes_df.to_csv(genes_out, sep='\t', index=False)
         print(f"[MAGMA Wrapper] Added SYMBOL column to {genes_out}")
     except Exception as e:
         print(f"[MAGMA Wrapper] Failed to add SYMBOL column: {e}")
 
-def run_magma(gwas_path, bfile_prefix, gene_loc, window, out_prefix, sample_size, hic_bed=None, magma_bin_path=None, mock=False):
+def resolve_magma_binary(magma_bin_path=None):
     magma_bin = magma_bin_path or os.environ.get("MAGMA_BIN", "magma")
     
-    # Dynamically resolve relative sibling path for magma if needed
     current_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(current_dir)
     default_sibling_magma = os.path.normpath(os.path.join(project_root, "..", "gwas-magma-pipeline", "bin", "magma_v1.10", "magma"))
 
-    # Check if MAGMA binary is installed
-    has_magma = False
-    if not mock:
-        candidates = [magma_bin, default_sibling_magma]
-        for candidate in candidates:
-            try:
-                res = subprocess.run([candidate, "--version"], capture_output=True, text=True)
-                if res.returncode == 0 or "MAGMA" in res.stdout or "MAGMA" in res.stderr:
-                    magma_bin = candidate
-                    has_magma = True
-                    break
-            except FileNotFoundError:
-                continue
+    candidates = [magma_bin, default_sibling_magma]
+    for candidate in candidates:
+        try:
+            res = subprocess.run([candidate, "--version"], capture_output=True, text=True)
+            if res.returncode == 0 or "MAGMA" in res.stdout or "MAGMA" in res.stderr:
+                return candidate, True
+        except FileNotFoundError:
+            continue
+            
+    return magma_bin, False
+
+def execute_magma_cli(magma_bin, gwas_path, bfile_prefix, gene_loc, window, out_prefix, sample_size):
+    print(f"[MAGMA Wrapper] Using real MAGMA binary at: {magma_bin}")
+    annot_prefix = f"{out_prefix}_annot"
+    annot_cmd = [
+        magma_bin,
+        "--annotate",
+        f"window={window}",
+        "--snp-loc", gwas_path,
+        "--gene-loc", gene_loc,
+        "--out", annot_prefix
+    ]
+    subprocess.run(annot_cmd, check=True)
+
+    analysis_cmd = [
+        magma_bin,
+        "--bfile", bfile_prefix,
+        "--pval", gwas_path, "use=SNP,P",
+        f"N={sample_size}",
+        "--gene-annot", f"{annot_prefix}.genes.annot",
+        "--out", out_prefix
+    ]
+    subprocess.run(analysis_cmd, check=True)
+
+def generate_mock_magma_outputs(gwas_path, genes_out, genes_raw, hic_bed=None):
+    print(f"[MAGMA Wrapper] MAGMA binary not found or mock=True. Generating simulated MAGMA output files (Hi-C integrated: {bool(hic_bed)})...")
+    
+    if os.path.exists(gwas_path):
+        try:
+            df = pd.read_csv(gwas_path, sep='\t')
+        except Exception:
+            df = pd.DataFrame()
+    else:
+        df = pd.DataFrame()
+
+    dummy_genes = [
+        {"GENE": 1, "SYMBOL": "GENE_A", "CHR": 1, "START": 5000, "STOP": 35000, "NSNPS": 12 if hic_bed else 10, "NPARAM": 12 if hic_bed else 10, "ZSTAT": 3.65 if hic_bed else 3.45, "P": 0.00013},
+        {"GENE": 2, "SYMBOL": "GENE_B", "CHR": 2, "START": 10000, "STOP": 30000, "NSNPS": 10 if hic_bed else 8, "NPARAM": 10 if hic_bed else 8, "ZSTAT": 2.35 if hic_bed else 2.15, "P": 0.00938},
+        {"GENE": 3, "SYMBOL": "GENE_C", "CHR": 3, "START": 15000, "STOP": 40000, "NSNPS": 15 if hic_bed else 12, "NPARAM": 15 if hic_bed else 12, "ZSTAT": 0.95 if hic_bed else 0.85, "P": 0.17105}
+    ]
+    
+    genes_df = pd.DataFrame(dummy_genes)
+    genes_df.to_csv(genes_out, sep='\t', index=False)
+
+    with open(genes_raw, "w") as f:
+        f.write("# Mock MAGMA raw file with Hi-C integration\n")
+        for _, row in genes_df.iterrows():
+            f.write(f"{row['GENE']}\t{row['SYMBOL']}\t{row['NSNPS']}\t{row['P']}\n")
+
+def run_magma(gwas_path, bfile_prefix, gene_loc, window, out_prefix, sample_size, hic_bed=None, magma_bin_path=None, mock=False):
+    magma_bin, has_magma = resolve_magma_binary(magma_bin_path) if not mock else (magma_bin_path or "magma", False)
 
     genes_out = f"{out_prefix}.genes.out"
     genes_raw = f"{out_prefix}.genes.raw"
@@ -56,62 +112,10 @@ def run_magma(gwas_path, bfile_prefix, gene_loc, window, out_prefix, sample_size
         print(f"[MAGMA Wrapper] Hi-C BED region file provided: {hic_bed}")
 
     if has_magma and not mock:
-        print(f"[MAGMA Wrapper] Using real MAGMA binary at: {magma_bin}")
-        # 1. Run Annotation
-        annot_prefix = f"{out_prefix}_annot"
-        annot_cmd = [
-            magma_bin,
-            "--annotate",
-            f"window={window}",
-            "--snp-loc", gwas_path,
-            "--gene-loc", gene_loc,
-            "--out", annot_prefix
-        ]
-        subprocess.run(annot_cmd, check=True)
-
-        # 2. Run Gene Analysis
-        analysis_cmd = [
-            magma_bin,
-            "--bfile", bfile_prefix,
-            "--pval", gwas_path, "use=SNP,P",
-            f"N={sample_size}",
-            "--gene-annot", f"{annot_prefix}.genes.annot",
-            "--out", out_prefix
-        ]
-        subprocess.run(analysis_cmd, check=True)
-        
-        # 3. Append SYMBOL column
+        execute_magma_cli(magma_bin, gwas_path, bfile_prefix, gene_loc, window, out_prefix, sample_size)
         add_symbol_column(genes_out, gene_loc)
-
     else:
-        print(f"[MAGMA Wrapper] MAGMA binary not found or mock=True. Generating simulated MAGMA output files at {out_prefix} (Hi-C integrated: {bool(hic_bed)})...")
-        
-        # Read input GWAS to map genes
-        if os.path.exists(gwas_path):
-            try:
-                df = pd.read_csv(gwas_path, sep='\t')
-            except Exception:
-                df = pd.DataFrame()
-        else:
-            df = pd.DataFrame()
-
-        # Dummy gene data if input GWAS does not contain gene names
-        dummy_genes = [
-            {"GENE": 1, "SYMBOL": "GENE_A", "CHR": 1, "START": 5000, "STOP": 35000, "NSNPS": 12 if hic_bed else 10, "NPARAM": 12 if hic_bed else 10, "ZSTAT": 3.65 if hic_bed else 3.45, "P": 0.00013},
-            {"GENE": 2, "SYMBOL": "GENE_B", "CHR": 2, "START": 10000, "STOP": 30000, "NSNPS": 10 if hic_bed else 8, "NPARAM": 10 if hic_bed else 8, "ZSTAT": 2.35 if hic_bed else 2.15, "P": 0.00938},
-            {"GENE": 3, "SYMBOL": "GENE_C", "CHR": 3, "START": 15000, "STOP": 40000, "NSNPS": 15 if hic_bed else 12, "NPARAM": 15 if hic_bed else 12, "ZSTAT": 0.95 if hic_bed else 0.85, "P": 0.17105}
-        ]
-        
-        genes_df = pd.DataFrame(dummy_genes)
-        
-        # Write .genes.out
-        genes_df.to_csv(genes_out, sep='\t', index=False)
-
-        # Write .genes.raw
-        with open(genes_raw, "w") as f:
-            f.write("# Mock MAGMA raw file with Hi-C integration\n")
-            for _, row in genes_df.iterrows():
-                f.write(f"{row['GENE']}\t{row['SYMBOL']}\t{row['NSNPS']}\t{row['P']}\n")
+        generate_mock_magma_outputs(gwas_path, genes_out, genes_raw, hic_bed=hic_bed)
 
     print(f"MAGMA execution complete: created {genes_out} and {genes_raw}.")
 

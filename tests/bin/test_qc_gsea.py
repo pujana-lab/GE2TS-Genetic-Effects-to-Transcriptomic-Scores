@@ -3,7 +3,11 @@ import sys
 import tempfile
 import pytest
 import pandas as pd
-from bin.qc_gsea import run_gsea_and_qc, main, parse_gmt
+from bin import qc_gsea
+from bin.qc_gsea import (
+    run_gsea_and_qc, main, parse_gmt, load_genes_data,
+    calculate_pathway_zscores, write_qc_summary
+)
 
 def test_run_gsea_and_qc():
     dummy_genes_data = "GENE\tSYMBOL\tCHR\tSTART\tSTOP\tNSNPS\tNPARAM\tZSTAT\tP\n1\tGENE_A\t1\t5000\t35000\t10\t10\t3.45\t0.00028\n2\tGENE_B\t2\t10000\t30000\t8\t8\t2.15\t0.01578\n"
@@ -36,7 +40,6 @@ def test_parse_gmt_nonexistent():
     assert pathways == {}
 
 def test_qc_gsea_symbol_fallback():
-    # Genes file without SYMBOL
     dummy_genes_data = "GENE\tCHR\tSTART\tSTOP\tNSNPS\tNPARAM\tZSTAT\tP\n1\t1\t5000\t35000\t10\t10\t3.45\t0.00028\n"
     gmt_path = "assets/test_data/dummy_pathways.gmt"
     
@@ -60,12 +63,46 @@ def test_qc_gsea_symbol_fallback():
             gene_loc=gene_loc
         )
         
-        # Verify
         pathway_df = pd.read_csv(os.path.join(out_dir, "no_symbol_gsea_pathways.tsv"), sep='\t')
-        # Check if it matched GENE_A
-        # The test pathway file should contain GENE_A
-        # Let's assume dummy_pathways.gmt contains GENE_A
         assert pathway_df["N_MATCHED"].iloc[0] > 0
+
+def test_load_genes_data_nonexistent():
+    with pytest.raises(FileNotFoundError):
+        load_genes_data("non_existent.genes.out")
+
+def test_load_genes_data_pandas_fallback(monkeypatch):
+    monkeypatch.setattr(qc_gsea, "USE_POLARS", False)
+    dummy_genes_data = "GENE\tCHR\tSTART\tSTOP\tNSNPS\tNPARAM\tZSTAT\tP\n1\t1\t5000\t35000\t10\t10\t3.45\t0.00028\n"
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        genes_out = os.path.join(tmpdir, "sample.genes.out")
+        with open(genes_out, "w") as f:
+            f.write(dummy_genes_data)
+            
+        df = load_genes_data(genes_out)
+        assert "GENE" in df.columns
+
+def test_calculate_pathway_zscores_no_match():
+    genes_df = pd.DataFrame({"SYMBOL": ["GENE_X"], "ZSTAT": [1.0]})
+    pathways = {"TEST_PATHWAY": {"GENE_A", "GENE_B"}}
+    
+    res = calculate_pathway_zscores(genes_df, pathways)
+    assert len(res) == 1
+    assert res.iloc[0]["N_MATCHED"] == 0
+    assert res.iloc[0]["P_VALUE"] == 1.0
+
+def test_write_qc_summary():
+    genes_df = pd.DataFrame({"P": [0.01, 0.04, 0.20]})
+    pathway_df = pd.DataFrame([{"PATHWAY": "PATH_1", "P_VALUE": 0.001}])
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        qc_path = os.path.join(tmpdir, "summary.tsv")
+        write_qc_summary(genes_df, pathway_df, "pheno1", qc_path)
+        
+        assert os.path.exists(qc_path)
+        df = pd.read_csv(qc_path, sep='\t')
+        assert df["SignificantGenes_P005"].iloc[0] == 2
+        assert df["TopEnrichedPathway"].iloc[0] == "PATH_1"
 
 def test_qc_gsea_cli(monkeypatch):
     dummy_genes_data = "GENE\tSYMBOL\tCHR\tSTART\tSTOP\tNSNPS\tNPARAM\tZSTAT\tP\n1\tGENE_A\t1\t5000\t35000\t10\t10\t3.45\t0.00028\n"

@@ -8,9 +8,15 @@ and outputs transcriptomic scores and QC summary metrics.
 import argparse
 import os
 import sys
-import pandas as pd
 import numpy as np
 from scipy.stats import norm
+
+try:
+    import polars as pl
+    USE_POLARS = True
+except ImportError:
+    USE_POLARS = False
+import pandas as pd
 
 def parse_gmt(gmt_path):
     pathways = {}
@@ -22,31 +28,30 @@ def parse_gmt(gmt_path):
             parts = line.strip().split("\t")
             if len(parts) >= 3:
                 name = parts[0]
-                # desc = parts[1]
                 genes = [g.strip().upper() for g in parts[2:] if g.strip()]
                 pathways[name] = set(genes)
     return pathways
 
-def run_gsea_and_qc(genes_out_path, gmt_path, out_dir, qc_summary_path, gene_loc=None):
-    os.makedirs(out_dir, exist_ok=True)
-    phenotype = os.path.basename(genes_out_path).replace(".genes.out", "")
-
-    # Read MAGMA .genes.out
+def load_genes_data(genes_out_path, gene_loc=None):
     if not os.path.exists(genes_out_path):
         raise FileNotFoundError(f"MAGMA genes file not found: {genes_out_path}")
 
-    try:
-        genes_df = pd.read_csv(genes_out_path, sep=r'\s+', engine='python')
-    except Exception:
-        genes_df = pd.read_csv(genes_out_path, sep='\t')
+    if USE_POLARS:
+        try:
+            genes_df = pl.read_csv(genes_out_path, separator='\t').to_pandas()
+        except Exception:
+            genes_df = pd.read_csv(genes_out_path, sep=r'\s+', engine='python')
+    else:
+        try:
+            genes_df = pd.read_csv(genes_out_path, sep=r'\s+', engine='python')
+        except Exception:
+            genes_df = pd.read_csv(genes_out_path, sep='\t')
 
-    # Normalize column names to uppercase
     genes_df.columns = [c.upper() for c in genes_df.columns]
     
-    # Add SYMBOL if missing
     if "SYMBOL" not in genes_df.columns and gene_loc and os.path.exists(gene_loc):
         try:
-            loc_df = pd.read_csv(gene_loc, sep='\s+', header=None)
+            loc_df = pd.read_csv(gene_loc, sep=r'\s+', header=None)
             mapping = dict(zip(loc_df[0], loc_df[loc_df.columns[-1]]))
             genes_df["SYMBOL"] = genes_df["GENE"].map(mapping)
             print(f"[QC GSEA] Added SYMBOL column using {gene_loc}")
@@ -56,9 +61,9 @@ def run_gsea_and_qc(genes_out_path, gmt_path, out_dir, qc_summary_path, gene_loc
     if "SYMBOL" in genes_df.columns:
         genes_df["SYMBOL"] = genes_df["SYMBOL"].astype(str).str.upper()
 
-    # Parse GMT pathways
-    pathways = parse_gmt(gmt_path)
+    return genes_df
 
+def calculate_pathway_zscores(genes_df, pathways):
     pathway_results = []
     
     for p_name, p_genes in pathways.items():
@@ -70,7 +75,6 @@ def run_gsea_and_qc(genes_out_path, gmt_path, out_dir, qc_summary_path, gene_loc
             median_z = float(matched["ZSTAT"].median())
             max_z = float(matched["ZSTAT"].max())
             top_gene = matched.loc[matched["ZSTAT"].idxmax(), "SYMBOL"] if "SYMBOL" in matched.columns else "N/A"
-            # Calculate combined Stouffer Z score P-value
             combined_z = mean_z * np.sqrt(n_matched)
             p_val = float(2 * norm.sf(abs(combined_z)))
         else:
@@ -90,11 +94,9 @@ def run_gsea_and_qc(genes_out_path, gmt_path, out_dir, qc_summary_path, gene_loc
     pathway_df = pd.DataFrame(pathway_results)
     if not pathway_df.empty:
         pathway_df = pathway_df.sort_values(by=["MEAN_Z", "P_VALUE"], ascending=[False, True])
+    return pathway_df
 
-    gsea_tsv = os.path.join(out_dir, f"{phenotype}_gsea_pathways.tsv")
-    pathway_df.to_csv(gsea_tsv, sep='\t', index=False)
-
-    # Compile QC summary matrix
+def write_qc_summary(genes_df, pathway_df, phenotype, qc_summary_path):
     total_genes = len(genes_df)
     significant_genes = len(genes_df[genes_df["P"] < 0.05]) if "P" in genes_df.columns else 0
 
@@ -102,18 +104,30 @@ def run_gsea_and_qc(genes_out_path, gmt_path, out_dir, qc_summary_path, gene_loc
         "Phenotype": phenotype,
         "TotalTestedGenes": total_genes,
         "SignificantGenes_P005": significant_genes,
-        "PathwaysEvaluated": len(pathways),
+        "PathwaysEvaluated": len(pathway_df) if not pathway_df.empty else 0,
         "TopEnrichedPathway": pathway_df.iloc[0]["PATHWAY"] if not pathway_df.empty else "N/A",
         "TopPathway_PValue": pathway_df.iloc[0]["P_VALUE"] if not pathway_df.empty else 1.0
     }]
 
     qc_df = pd.DataFrame(qc_data)
-    
     qc_out_dir = os.path.dirname(qc_summary_path)
     if qc_out_dir:
         os.makedirs(qc_out_dir, exist_ok=True)
 
     qc_df.to_csv(qc_summary_path, sep='\t', index=False)
+
+def run_gsea_and_qc(genes_out_path, gmt_path, out_dir, qc_summary_path, gene_loc=None):
+    os.makedirs(out_dir, exist_ok=True)
+    phenotype = os.path.basename(genes_out_path).replace(".genes.out", "")
+
+    genes_df = load_genes_data(genes_out_path, gene_loc)
+    pathways = parse_gmt(gmt_path)
+    pathway_df = calculate_pathway_zscores(genes_df, pathways)
+
+    gsea_tsv = os.path.join(out_dir, f"{phenotype}_gsea_pathways.tsv")
+    pathway_df.to_csv(gsea_tsv, sep='\t', index=False)
+
+    write_qc_summary(genes_df, pathway_df, phenotype, qc_summary_path)
 
     print(f"GSEA complete: Saved pathway scores to {gsea_tsv} and QC matrix to {qc_summary_path}.")
 
