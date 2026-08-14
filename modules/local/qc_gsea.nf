@@ -11,6 +11,7 @@ process QC_GSEA {
 
     output:
     tuple val(meta), path("GSEA/*.tsv")             , emit: gsea_results
+    tuple val(meta), path("GSEA/*.html")            , emit: gsea_html
     tuple val(meta), path("*.magma_qc_summary.tsv"), emit: qc_summary
 
     when:

@@ -6,7 +6,7 @@ import pandas as pd
 from bin import qc_gsea
 from bin.qc_gsea import (
     run_gsea_and_qc, main, parse_gmt, load_genes_data,
-    calculate_pathway_zscores, write_qc_summary
+    calculate_pathway_zscores, write_qc_summary, generate_gsea_html_report
 )
 
 def test_run_gsea_and_qc():
@@ -30,6 +30,12 @@ def test_run_gsea_and_qc():
 
         assert os.path.exists(qc_tsv)
         assert os.path.exists(os.path.join(out_dir, "sample_gsea_pathways.tsv"))
+        assert os.path.exists(os.path.join(out_dir, "sample_gsea_report.html"))
+
+        with open(os.path.join(out_dir, "sample_gsea_report.html"), "r") as f:
+            html_text = f.read()
+            assert "GE2TS GSEA Enrichment Report" in html_text
+            assert "sample" in html_text
 
         pathway_df = pd.read_csv(os.path.join(out_dir, "sample_gsea_pathways.tsv"), sep='\t')
         assert "PATHWAY" in pathway_df.columns
@@ -65,6 +71,20 @@ def test_qc_gsea_symbol_fallback():
         
         pathway_df = pd.read_csv(os.path.join(out_dir, "no_symbol_gsea_pathways.tsv"), sep='\t')
         assert pathway_df["N_MATCHED"].iloc[0] > 0
+        assert os.path.exists(os.path.join(out_dir, "no_symbol_gsea_report.html"))
+
+def test_generate_gsea_html_report_empty():
+    genes_df = pd.DataFrame()
+    pathway_df = pd.DataFrame()
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        html_out = os.path.join(tmpdir, "empty_report.html")
+        generate_gsea_html_report("empty_pheno", genes_df, pathway_df, html_out)
+        
+        assert os.path.exists(html_out)
+        with open(html_out, "r") as f:
+            html = f.read()
+            assert "No pathway enrichment results available" in html
 
 def test_load_genes_data_nonexistent():
     with pytest.raises(FileNotFoundError):
@@ -128,3 +148,4 @@ def test_qc_gsea_cli(monkeypatch):
 
         assert os.path.exists(qc_tsv)
         assert os.path.exists(os.path.join(out_dir, "cli_sample_gsea_pathways.tsv"))
+        assert os.path.exists(os.path.join(out_dir, "cli_sample_gsea_report.html"))
