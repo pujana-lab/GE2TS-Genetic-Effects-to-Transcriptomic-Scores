@@ -11,6 +11,7 @@ import sys
 import gzip
 import json
 import csv
+from bin.engine import get_engine
 
 SYNONYM_MAP = {
     "MARKERNAME": "SNP",
@@ -45,21 +46,18 @@ def detect_delimiter(file_path):
 
 def process_gwas(input_path, output_path, qc_summary_path, filter_indels=True):
     sep = detect_delimiter(input_path)
-
-    try:
-        import polars as pl
-        use_polars = True
-    except ImportError:
-        import pandas as pd
-        use_polars = False
+    engine = get_engine()
+    use_polars = (engine.engine == 'polars')
 
     if use_polars:
         try:
+            import polars as pl
             df = pl.read_csv(input_path, separator=sep, infer_schema_length=0, null_values=["NULL", "NA", "nan", ""])
         except Exception:
             use_polars = False
 
     if use_polars:
+        import polars as pl
         rename_dict = {}
         for c in df.columns:
             uc = c.upper()

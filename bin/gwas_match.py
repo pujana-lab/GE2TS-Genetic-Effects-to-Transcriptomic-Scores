@@ -8,34 +8,15 @@ mapping variant IDs to reference rsIDs.
 import argparse
 import os
 import sys
-import csv
 import gzip
-import polars as pl
+import csv
+from bin.engine import get_engine
 
 def match_variants(gwas_file, output_file, bim_file):
     print(f"Loading reference BIM file: {bim_file}")
-    ref = pl.read_csv(
-        bim_file,
-        separator='\t',
-        has_header=False,
-        new_columns=['CHR', 'ID', 'CM', 'POS', 'A1', 'A2'],
-        schema_overrides={'CHR': pl.String, 'POS': pl.Int64, 'ID': pl.String, 'A1': pl.String, 'A2': pl.String}
-    )
+    engine = get_engine()
     
-    comp_map = {'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C'}
-    ref = ref.with_columns([
-        pl.concat_str([pl.col("CHR"), pl.col("POS"), pl.col("A1"), pl.col("A2")], separator=":").alias("key_exact"),
-        pl.concat_str([pl.col("CHR"), pl.col("POS"), pl.col("A2"), pl.col("A1")], separator=":").alias("key_swapped"),
-        pl.col("A1").map_elements(lambda x: "".join([comp_map.get(b, b) for b in x]), return_dtype=pl.String).alias("A1_c"),
-        pl.col("A2").map_elements(lambda x: "".join([comp_map.get(b, b) for b in x]), return_dtype=pl.String).alias("A2_c")
-    ]).with_columns(
-        pl.concat_str([pl.col("CHR"), pl.col("POS"), pl.col("A1_c"), pl.col("A2_c")], separator=":").alias("key_strand")
-    )
-
-    id_map = dict(zip(ref['ID'], ref['ID']))
-    exact_map = dict(zip(ref['key_exact'], ref['ID']))
-    swap_map = dict(zip(ref['key_swapped'], ref['ID']))
-    strand_map = dict(zip(ref['key_strand'], ref['ID']))
+    id_map, exact_map, swap_map, strand_map = engine.load_bim_and_create_maps(bim_file)
     
     print(f"Processing GWAS file: {gwas_file}")
     open_func = gzip.open if gwas_file.endswith('.gz') else open
@@ -82,7 +63,6 @@ def match_variants(gwas_file, output_file, bim_file):
                 pass
             
             writer.writerow(row)
-
     print(f"Variant matching complete. Matched {matched_count} / {total_count} variants to reference BIM IDs.")
 
 def main():
