@@ -11,16 +11,17 @@ import sys
 import subprocess
 import pandas as pd
 try:
-    import polars as pl
-    USE_POLARS = True
-except ImportError:
-    USE_POLARS = False
+    from bin.engine import get_engine, HAS_POLARS
+except ModuleNotFoundError:
+    from engine import get_engine, HAS_POLARS
 
 def add_symbol_column(genes_out, gene_loc):
     if not os.path.exists(gene_loc):
         return
     try:
-        if USE_POLARS:
+        engine = get_engine()
+        if engine.engine == 'polars':
+            import polars as pl
             genes_df = pl.read_csv(genes_out, separator='\t')
             loc_df = pl.read_csv(gene_loc, separator='\t', has_header=False)
             mapping_df = loc_df.select([pl.col(loc_df.columns[0]).alias("GENE"), pl.col(loc_df.columns[-1]).alias("SYMBOL")])

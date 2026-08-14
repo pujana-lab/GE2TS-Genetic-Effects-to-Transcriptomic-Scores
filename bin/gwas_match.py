@@ -10,7 +10,10 @@ import os
 import sys
 import gzip
 import csv
-from bin.engine import get_engine
+try:
+    from bin.engine import get_engine
+except ModuleNotFoundError:
+    from engine import get_engine
 
 def load_reference_maps(bim_file):
     print(f"Loading reference BIM file: {bim_file}")

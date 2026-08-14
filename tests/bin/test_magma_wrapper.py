@@ -24,7 +24,8 @@ def test_add_symbol_column_polars_and_pandas(monkeypatch):
         assert df.loc[df["GENE"] == 1, "SYMBOL"].iloc[0] == "GENE_A"
 
         # Test pandas fallback
-        monkeypatch.setattr(magma_wrapper, "USE_POLARS", False)
+        from bin.engine import DataEngine
+        monkeypatch.setattr(magma_wrapper, "get_engine", lambda: DataEngine(engine_type='pandas'))
         add_symbol_column(genes_out, gene_loc)
         df_pd = pd.read_csv(genes_out, sep='\t')
         assert "SYMBOL" in df_pd.columns

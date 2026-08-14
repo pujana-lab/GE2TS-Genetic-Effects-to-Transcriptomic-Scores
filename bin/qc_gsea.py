@@ -10,13 +10,12 @@ import os
 import sys
 import numpy as np
 from scipy.stats import norm
+import pandas as pd
 
 try:
-    import polars as pl
-    USE_POLARS = True
-except ImportError:
-    USE_POLARS = False
-import pandas as pd
+    from bin.engine import get_engine, HAS_POLARS
+except ModuleNotFoundError:
+    from engine import get_engine, HAS_POLARS
 
 def parse_gmt(gmt_path):
     pathways = {}
@@ -36,7 +35,9 @@ def load_genes_data(genes_out_path, gene_loc=None):
     if not os.path.exists(genes_out_path):
         raise FileNotFoundError(f"MAGMA genes file not found: {genes_out_path}")
 
-    if USE_POLARS:
+    engine = get_engine()
+    if engine.engine == 'polars':
+        import polars as pl
         try:
             genes_df = pl.read_csv(genes_out_path, separator='\t').to_pandas()
         except Exception:

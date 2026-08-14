@@ -91,7 +91,8 @@ def test_load_genes_data_nonexistent():
         load_genes_data("non_existent.genes.out")
 
 def test_load_genes_data_pandas_fallback(monkeypatch):
-    monkeypatch.setattr(qc_gsea, "USE_POLARS", False)
+    from bin.engine import DataEngine
+    monkeypatch.setattr(qc_gsea, "get_engine", lambda: DataEngine(engine_type='pandas'))
     dummy_genes_data = "GENE\tCHR\tSTART\tSTOP\tNSNPS\tNPARAM\tZSTAT\tP\n1\t1\t5000\t35000\t10\t10\t3.45\t0.00028\n"
     
     with tempfile.TemporaryDirectory() as tmpdir:

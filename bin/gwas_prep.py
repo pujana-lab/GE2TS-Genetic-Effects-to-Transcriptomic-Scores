@@ -11,7 +11,10 @@ import sys
 import gzip
 import json
 import csv
-from bin.engine import get_engine
+try:
+    from bin.engine import get_engine
+except ModuleNotFoundError:
+    from engine import get_engine
 
 SYNONYM_MAP = {
     "MARKERNAME": "SNP",
