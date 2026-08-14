@@ -10,29 +10,18 @@ import os
 import sys
 import subprocess
 import pandas as pd
+
 try:
-    from bin.engine import get_engine, HAS_POLARS
+    from bin.engine import get_engine
 except ModuleNotFoundError:
-    from engine import get_engine, HAS_POLARS
+    from engine import get_engine
 
 def add_symbol_column(genes_out, gene_loc):
     if not os.path.exists(gene_loc):
         return
     try:
         engine = get_engine()
-        if engine.engine == 'polars':
-            import polars as pl
-            genes_df = pl.read_csv(genes_out, separator='\t')
-            loc_df = pl.read_csv(gene_loc, separator='\t', has_header=False)
-            mapping_df = loc_df.select([pl.col(loc_df.columns[0]).alias("GENE"), pl.col(loc_df.columns[-1]).alias("SYMBOL")])
-            genes_df = genes_df.join(mapping_df, on="GENE", how="left")
-            genes_df.write_csv(genes_out, separator='\t')
-        else:
-            genes_df = pd.read_csv(genes_out, sep=r'\s+')
-            loc_df = pd.read_csv(gene_loc, sep=r'\s+', header=None)
-            mapping = dict(zip(loc_df[0], loc_df[loc_df.columns[-1]]))
-            genes_df['SYMBOL'] = genes_df['GENE'].map(mapping)
-            genes_df.to_csv(genes_out, sep='\t', index=False)
+        engine.add_symbol_column(genes_out, gene_loc)
         print(f"[MAGMA Wrapper] Added SYMBOL column to {genes_out}")
     except Exception as e:
         print(f"[MAGMA Wrapper] Failed to add SYMBOL column: {e}")
@@ -78,16 +67,8 @@ def execute_magma_cli(magma_bin, gwas_path, bfile_prefix, gene_loc, window, out_
     ]
     subprocess.run(analysis_cmd, check=True)
 
-def generate_mock_magma_outputs(gwas_path, genes_out, genes_raw, hic_bed=None):
+def generate_mock_magma_outputs(genes_out, genes_raw, hic_bed=None):
     print(f"[MAGMA Wrapper] MAGMA binary not found or mock=True. Generating simulated MAGMA output files (Hi-C integrated: {bool(hic_bed)})...")
-    
-    if os.path.exists(gwas_path):
-        try:
-            df = pd.read_csv(gwas_path, sep='\t')
-        except Exception:
-            df = pd.DataFrame()
-    else:
-        df = pd.DataFrame()
 
     dummy_genes = [
         {"GENE": 1, "SYMBOL": "GENE_A", "CHR": 1, "START": 5000, "STOP": 35000, "NSNPS": 12 if hic_bed else 10, "NPARAM": 12 if hic_bed else 10, "ZSTAT": 3.65 if hic_bed else 3.45, "P": 0.00013},
@@ -116,7 +97,7 @@ def run_magma(gwas_path, bfile_prefix, gene_loc, window, out_prefix, sample_size
         execute_magma_cli(magma_bin, gwas_path, bfile_prefix, gene_loc, window, out_prefix, sample_size)
         add_symbol_column(genes_out, gene_loc)
     else:
-        generate_mock_magma_outputs(gwas_path, genes_out, genes_raw, hic_bed=hic_bed)
+        generate_mock_magma_outputs(genes_out, genes_raw, hic_bed=hic_bed)
 
     print(f"MAGMA execution complete: created {genes_out} and {genes_raw}.")
 

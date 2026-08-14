@@ -29,6 +29,20 @@ class DataEngine:
         except Exception:
             return pd.read_csv(genes_out_path, sep='\t')
 
+    def add_symbol_column(self, genes_out, gene_loc):
+        if self.engine == 'polars':
+            genes_df = pl.read_csv(genes_out, separator='\t')
+            loc_df = pl.read_csv(gene_loc, separator='\t', has_header=False)
+            mapping_df = loc_df.select([pl.col(loc_df.columns[0]).alias("GENE"), pl.col(loc_df.columns[-1]).alias("SYMBOL")])
+            genes_df = genes_df.join(mapping_df, on="GENE", how="left")
+            genes_df.write_csv(genes_out, separator='\t')
+        else:
+            genes_df = pd.read_csv(genes_out, sep=r'\s+')
+            loc_df = pd.read_csv(gene_loc, sep=r'\s+', header=None)
+            mapping = dict(zip(loc_df[0], loc_df[loc_df.columns[-1]]))
+            genes_df['SYMBOL'] = genes_df['GENE'].map(mapping)
+            genes_df.to_csv(genes_out, sep='\t', index=False)
+
     def load_bim_and_create_maps(self, bim_file):
         if self.engine == 'polars':
             ref = pl.read_csv(
