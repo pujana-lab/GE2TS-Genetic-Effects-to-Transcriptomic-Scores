@@ -3,7 +3,30 @@ import sys
 import tempfile
 import subprocess
 import pandas as pd
-from bin.magma_wrapper import run_magma, main
+from bin.magma_wrapper import run_magma, main, add_symbol_column
+
+def test_add_symbol_column():
+    # Setup
+    with tempfile.TemporaryDirectory() as tmpdir:
+        genes_out = os.path.join(tmpdir, "test.genes.out")
+        gene_loc = os.path.join(tmpdir, "test.gene.loc")
+        
+        # Create dummy genes.out
+        pd.DataFrame({"GENE": [1, 2], "P": [0.1, 0.2]}).to_csv(genes_out, sep='\t', index=False)
+        
+        # Create dummy gene.loc
+        with open(gene_loc, "w") as f:
+            f.write("1\tCHR\tSTART\tSTOP\tGENE_A\n")
+            f.write("2\tCHR\tSTART\tSTOP\tGENE_B\n")
+        
+        # Execute
+        add_symbol_column(genes_out, gene_loc)
+        
+        # Verify
+        df = pd.read_csv(genes_out, sep='\t')
+        assert "SYMBOL" in df.columns
+        assert df.loc[df["GENE"] == 1, "SYMBOL"].iloc[0] == "GENE_A"
+        assert df.loc[df["GENE"] == 2, "SYMBOL"].iloc[0] == "GENE_B"
 
 def test_run_magma_mock():
     gwas_path = "assets/test_data/sample_gwas.tsv"

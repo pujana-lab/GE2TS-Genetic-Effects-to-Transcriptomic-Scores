@@ -11,6 +11,22 @@ import sys
 import subprocess
 import pandas as pd
 
+def add_symbol_column(genes_out, gene_loc):
+    if not os.path.exists(gene_loc):
+        return
+    try:
+        # Read .genes.out
+        genes_df = pd.read_csv(genes_out, sep='\s+')
+        # Read gene_loc (assuming format: ID ... SYMBOL)
+        loc_df = pd.read_csv(gene_loc, sep='\s+', header=None)
+        # Mapping ID (col 0) to SYMBOL (last col)
+        mapping = dict(zip(loc_df[0], loc_df[loc_df.columns[-1]]))
+        genes_df['SYMBOL'] = genes_df['GENE'].map(mapping)
+        genes_df.to_csv(genes_out, sep='\t', index=False)
+        print(f"[MAGMA Wrapper] Added SYMBOL column to {genes_out}")
+    except Exception as e:
+        print(f"[MAGMA Wrapper] Failed to add SYMBOL column: {e}")
+
 def run_magma(gwas_path, bfile_prefix, gene_loc, window, out_prefix, sample_size, hic_bed=None, magma_bin_path=None, mock=False):
     magma_bin = magma_bin_path or os.environ.get("MAGMA_BIN", "magma")
     
@@ -57,11 +73,15 @@ def run_magma(gwas_path, bfile_prefix, gene_loc, window, out_prefix, sample_size
         analysis_cmd = [
             magma_bin,
             "--bfile", bfile_prefix,
-            "--pval", gwas_path, f"N={sample_size}",
+            "--pval", gwas_path, "use=SNP,P",
+            f"N={sample_size}",
             "--gene-annot", f"{annot_prefix}.genes.annot",
             "--out", out_prefix
         ]
         subprocess.run(analysis_cmd, check=True)
+        
+        # 3. Append SYMBOL column
+        add_symbol_column(genes_out, gene_loc)
 
     else:
         print(f"[MAGMA Wrapper] MAGMA binary not found or mock=True. Generating simulated MAGMA output files at {out_prefix} (Hi-C integrated: {bool(hic_bed)})...")

@@ -27,7 +27,7 @@ def parse_gmt(gmt_path):
                 pathways[name] = set(genes)
     return pathways
 
-def run_gsea_and_qc(genes_out_path, gmt_path, out_dir, qc_summary_path):
+def run_gsea_and_qc(genes_out_path, gmt_path, out_dir, qc_summary_path, gene_loc=None):
     os.makedirs(out_dir, exist_ok=True)
     phenotype = os.path.basename(genes_out_path).replace(".genes.out", "")
 
@@ -43,6 +43,16 @@ def run_gsea_and_qc(genes_out_path, gmt_path, out_dir, qc_summary_path):
     # Normalize column names to uppercase
     genes_df.columns = [c.upper() for c in genes_df.columns]
     
+    # Add SYMBOL if missing
+    if "SYMBOL" not in genes_df.columns and gene_loc and os.path.exists(gene_loc):
+        try:
+            loc_df = pd.read_csv(gene_loc, sep='\s+', header=None)
+            mapping = dict(zip(loc_df[0], loc_df[loc_df.columns[-1]]))
+            genes_df["SYMBOL"] = genes_df["GENE"].map(mapping)
+            print(f"[QC GSEA] Added SYMBOL column using {gene_loc}")
+        except Exception as e:
+            print(f"[QC GSEA] Failed to add SYMBOL column using {gene_loc}: {e}")
+            
     if "SYMBOL" in genes_df.columns:
         genes_df["SYMBOL"] = genes_df["SYMBOL"].astype(str).str.upper()
 
@@ -113,13 +123,15 @@ def main():
     parser.add_argument("--pathway-gmt", required=True, help="Path to GMT pathway database")
     parser.add_argument("--out-dir", required=True, help="Output directory for GSEA results")
     parser.add_argument("--qc-summary-tsv", required=True, help="Output path for QC summary TSV")
+    parser.add_argument("--gene-loc", help="Path to Gene location file for SYMBOL mapping")
 
     args = parser.parse_args()
     run_gsea_and_qc(
         genes_out_path=args.genes_out,
         gmt_path=args.pathway_gmt,
         out_dir=args.out_dir,
-        qc_summary_path=args.qc_summary_tsv
+        qc_summary_path=args.qc_summary_tsv,
+        gene_loc=args.gene_loc
     )
 
 if __name__ == "__main__":

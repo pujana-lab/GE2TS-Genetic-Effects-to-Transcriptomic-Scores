@@ -60,7 +60,8 @@ workflow GE2TS {
     if (!params.stop_at_prep && !params.skip_magma && !params.skip_gsea) {
         QC_GSEA(
             ch_current_genes,
-            ch_pathways
+            ch_pathways,
+            ch_gene_loc
         )
         ch_gsea_results = QC_GSEA.out.gsea_results
         ch_magma_qc     = QC_GSEA.out.qc_summary

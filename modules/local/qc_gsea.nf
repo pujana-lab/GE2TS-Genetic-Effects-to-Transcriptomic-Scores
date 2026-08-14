@@ -7,6 +7,7 @@ process QC_GSEA {
     input:
     tuple val(meta), path(genes_out)
     path pathway_gmt
+    path gene_loc
 
     output:
     tuple val(meta), path("GSEA/*.tsv")             , emit: gsea_results
@@ -24,6 +25,7 @@ process QC_GSEA {
         --pathway-gmt ${pathway_gmt} \\
         --out-dir GSEA \\
         --qc-summary-tsv ${prefix}.magma_qc_summary.tsv \\
+        --gene-loc ${gene_loc} \\
         ${args}
     """
 }
