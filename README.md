@@ -29,6 +29,8 @@ flowchart LR
         G --> H[Cell-type and state-specific genetic-transcriptomic convergence]
 GE2TS integrates two gene-level data sources:
 
+```
+
 ### 1. Genetic association
 
 Gene-level association statistics generated from GWAS summary statistics using MAGMA.
