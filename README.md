@@ -70,22 +70,21 @@ For each signature, the current implementation reports:
 
 This allows transcriptomic programs or cell-type-specific gene signatures to be ranked according to the extent to which they contain genes carrying stronger inherited genetic association.
 
-
 ## Analysis workflow
 
-The analysis consists of four main steps:
+The pipeline consists of four main steps:
 
-1. **Prepare genetic scores**  
-   MAGMA gene-level results are imported and standardized.
+1. **Prepare GWAS data**  
+   GWAS summary statistics are standardized and quality controlled.
 
-2. **Prepare transcriptional signatures**  
-   Cell-type-specific differential-expression results are formatted as gene-level transcriptional response profiles.
+2. **Match variants to the reference dataset**  
+   GWAS variants are matched to the PLINK reference dataset used for MAGMA analysis.
 
-3. **Integrate genetic and transcriptomic data**  
-   Gene identifiers are harmonized and genetic association scores are matched to transcriptional response statistics.
+3. **Calculate MAGMA gene-level association scores**  
+   Variants are mapped to genes and MAGMA gene-level association statistics are calculated.
 
-4. **Quantify and visualize GE2TS relationships**  
-   Genetic–transcriptomic relationships are calculated across cell types and conditions and summarized using correlation plots, heatmaps, and gene-level visualizations.
+4. **Score transcriptomic or biological gene signatures**  
+   MAGMA gene-level scores are integrated with GMT-defined gene sets representing pathways or transcriptomic signatures. For each signature, GE2TS summarizes the distribution of genetic association across its constituent genes.
 
 ## Interpretation
 
