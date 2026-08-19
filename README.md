@@ -56,19 +56,20 @@ Each signature defines the set of genes against which MAGMA gene-level associati
 
 ## GE2TS analysis
 
-For each cell type and transcriptional condition, genes present in both datasets are matched and the relationship between gene-level genetic association and transcriptional response is quantified.
+For each transcriptomic or biological gene signature, GE2TS identifies the genes shared with the MAGMA gene-level results and summarizes the strength of genetic association within that gene set.
 
-Conceptually, GE2TS evaluates:
+For each signature, the current implementation reports:
 
-**MAGMA gene-level association score ↔ transcriptional response**
+- number of genes in the signature;
+- number of genes matched to MAGMA results;
+- mean MAGMA gene Z-score;
+- median MAGMA gene Z-score;
+- maximum MAGMA gene Z-score;
+- highest-scoring gene; and
+- a gene-set summary statistic and associated P-value.
 
-across genes within each cellular context.
+This allows transcriptomic programs or cell-type-specific gene signatures to be ranked according to the extent to which they contain genes carrying stronger inherited genetic association.
 
-A positive relationship indicates that genes with stronger genetic association tend to occur toward the upregulated end of the transcriptional response.
-
-A negative relationship indicates that genes with stronger genetic association tend to occur toward the downregulated end of the transcriptional response.
-
-Importantly, the sign of this relationship describes the **direction of the transcriptional response**. MAGMA gene Z-scores quantify the strength of gene-level association and do not provide the direction of the underlying genetic effect.
 
 ## Analysis workflow
 
