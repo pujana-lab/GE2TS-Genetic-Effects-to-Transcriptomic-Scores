@@ -31,27 +31,28 @@ flowchart LR
 
 ## Inputs
 
+GE2TS integrates gene-level genetic association with biologically defined gene sets or transcriptomic signatures.
+
 ### 1. Genetic association
 
-Gene-level association statistics generated from GWAS summary statistics using MAGMA.
+Gene-level association statistics are generated from GWAS summary statistics using MAGMA.
 
-Typical variables include:
+The pipeline can start from:
 
-- gene identifier
-- MAGMA gene-level Z-score
-- MAGMA P-value
+- raw GWAS summary statistics;
+- a pre-processed GWAS input file; or
+- pre-computed MAGMA `.genes.out` results.
 
-### 2. Transcriptional response
+MAGMA gene-level results include gene identifiers, gene-level Z-scores, and association P-values.
 
-Gene-level differential-expression statistics derived from single-cell transcriptomic analyses performed separately for defined cell types and experimental or biological conditions.
+### 2. Transcriptomic or biological gene signatures
 
-Typical variables include:
+Gene sets are supplied in GMT format.
 
-- gene identifier
-- cell type
-- perturbation or condition
-- log-fold change or equivalent expression statistic
-- differential-expression P-value
+These gene sets can represent pathways, cell-type-specific transcriptional programs, or gene signatures derived from single-cell perturbation analyses.
+
+Each signature defines the set of genes against which MAGMA gene-level association scores are evaluated.
+
 
 ## GE2TS analysis
 
