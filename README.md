@@ -26,11 +26,7 @@ flowchart LR
     E --> F[Gene-level expression changes]
     C --> G[GE2TS]
     F --> G
-    G --> H[Cell-type and state-specific genetic-transcriptomic convergence]
-
-
-## Inputs
-
+        G --> H[Cell-type and state-specific genetic-transcriptomic convergence]
 GE2TS integrates two gene-level data sources:
 
 ### 1. Genetic association
